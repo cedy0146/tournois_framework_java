@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <h2 class="mb-4">Tableau de bord</h2>
+    <div class="row mb-3">
+        <div class="col">
+            <a th:href="@{/tournaments/new}" class="btn btn-primary"
+               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Nouveau Tournoi</a>
+            <a th:href="@{/teams/new}" class="btn btn-success"
+               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Nouvelle Équipe</a>
+        </div>
+    </div>
+
+    <h4>Tournois actifs</h4>
+    <div class="table-responsive" th:if="${tournaments != null and !tournaments.isEmpty()}">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nom</th>
+                    <th>Sport</th>
+                    <th>Type</th>
+                    <th>Début</th>
+                    <th>Fin</th>
+                    <th>Statut</th>
+                    <th>Équipes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="t : ${tournaments}">
+                    <td th:text="${t.nom}"></td>
+                    <td th:text="${t.sport}"></td>
+                    <td th:text="${t.type}"></td>
+                    <td th:text="${t.dateDebut}"></td>
+                    <td th:text="${t.dateFin}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${t.statut == 'EN_COURS'} ? 'bg-success' : (${t.statut == 'INSCRIPTION'} ? 'bg-info' : (${t.statut == 'PROGRAMME'} ? 'bg-warning' : 'bg-secondary'))"
+                              th:text="${t.statut}"></span>
+                    </td>
+                    <td th:text="${t.nombreEquipesInscrites}"></td>
+                    <td>
+                        <a th:href="@{/tournaments/{id}(id=${t.id})}" class="btn btn-sm btn-outline-primary">Voir</a>
+                        <a th:href="@{/tournaments/{id}/matches(id=${t.id})}" class="btn btn-sm btn-outline-secondary">Matchs</a>
+                        <a th:href="@{/tournaments/{id}/ranking(id=${t.id})}" class="btn btn-sm btn-outline-info">Classement</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:unless="${tournaments != null and !tournaments.isEmpty()}" class="alert alert-info">
+        Aucun tournoi actif. <a th:href="@{/tournaments/new}">Créer un tournoi</a>
+    </div>
+</div>
+</html>

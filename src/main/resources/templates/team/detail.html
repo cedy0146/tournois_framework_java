@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 th:text="${team.nom}">Équipe</h2>
+        <div>
+            <a th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-warning"
+               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Modifier</a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>Ville :</strong> <span th:text="${team.ville} ?: 'Non défini'"></span></p>
+            <p><strong>Entraîneur :</strong> <span th:text="${team.entraineur} ?: 'Non défini'"></span></p>
+            <p><strong>Statut :</strong> <span class="badge bg-info" th:text="${team.statut}"></span></p>
+        </div>
+    </div>
+
+    <h4>Joueurs</h4>
+    <div class="table-responsive" th:if="${team.nombreJoueurs > 0}">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr><th>Nom</th><th>Poste</th><th>Numéro</th></tr>
+            </thead>
+            <tbody>
+                <tr th:each="j : ${team.joueurs}">
+                    <td th:text="${j.nom}"></td>
+                    <td th:text="${j.poste}"></td>
+                    <td th:text="${j.numero}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:unless="${team.nombreJoueurs > 0}" class="alert alert-info">
+        Aucun joueur dans cette équipe.
+    </div>
+</div>
+</html>

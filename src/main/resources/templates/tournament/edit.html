@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <h2 class="mb-4">Modifier le Tournoi</h2>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <form th:action="@{/tournaments/{id}(id=${tournament.id})}" method="post" class="card p-4">
+
+                <div class="mb-3">
+                    <label class="form-label">Nom</label>
+                    <input type="text" class="form-control" name="nom" th:value="${tournament.nom}"/>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Sport</label>
+                    <input type="text" class="form-control" name="sport" th:value="${tournament.sport}"/>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="description" th:text="${tournament.description}"></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date début</label>
+                        <input type="date" class="form-control" name="dateDebut" th:value="${tournament.dateDebut}"/>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date fin</label>
+                        <input type="date" class="form-control" name="dateFin" th:value="${tournament.dateFin}"/>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Lieu</label>
+                    <input type="text" class="form-control" name="lieu" th:value="${tournament.lieu}"/>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Statut</label>
+                    <select class="form-select" name="statut">
+                        <option th:each="s : ${T.values()}" th:value="${s}" th:text="${s}"
+                                th:selected="${s.name() == tournament.statut}"></option>
+                    </select>
+                </div>
+
+                <div class="text-end">
+                    <a th:href="@{/tournaments/{id}(id=${tournament.id})}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</html>

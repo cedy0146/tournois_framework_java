@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 th:text="${tournament.nom}">Tournoi</h2>
+        <div>
+            <a th:href="@{/tournaments/{id}/edit(id=${tournament.id})}" class="btn btn-warning"
+               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Modifier</a>
+            <a th:href="@{/tournaments/{id}/matches(id=${tournament.id})}" class="btn btn-info">Matchs</a>
+            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-secondary">Classement</a>
+            <form th:action="@{/tournaments/{id}/generate-matches(id=${tournament.id})}" method="post" class="d-inline"
+                  sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                <button type="submit" class="btn btn-success">Générer les matchs</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Informations</h5>
+                    <p><strong>Sport :</strong> <span th:text="${tournament.sport}"></span></p>
+                    <p><strong>Type :</strong> <span th:text="${tournament.type}"></span></p>
+                    <p><strong>Statut :</strong> <span class="badge bg-info" th:text="${tournament.statut}"></span></p>
+                    <p><strong>Lieu :</strong> <span th:text="${tournament.lieu} ?: 'Non défini'"></span></p>
+                    <p><strong>Période :</strong> du <span th:text="${tournament.dateDebut}"></span> au <span th:text="${tournament.dateFin}"></span></p>
+                    <p><strong>Équipes :</strong> <span th:text="${tournament.nombreEquipesInscrites}"></span> / <span th:text="${tournament.nombreMaxEquipes}"></span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Description</h5>
+                    <p th:text="${tournament.description} ?: 'Aucune description'"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire d'inscription d'équipe -->
+    <div class="card mb-3" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+        <div class="card-body">
+            <h5 class="card-title">Inscrire une équipe</h5>
+            <form th:action="@{/tournaments/{id}/register-team(id=${tournament.id})}" method="post" class="row g-3">
+                <div class="col-auto">
+                    <select name="teamId" class="form-select" required>
+                        <option value="">-- Choisir une équipe --</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Inscrire</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</html>

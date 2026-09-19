@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Liste des Équipes</h2>
+        <a th:href="@{/teams/new}" class="btn btn-success"
+           sec:authorize="hasAnyRole('ADMIN','MANAGER')">Nouvelle Équipe</a>
+    </div>
+
+    <div class="table-responsive" th:if="${teams != null and !teams.content.isEmpty()}">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nom</th>
+                    <th>Ville</th>
+                    <th>Entraîneur</th>
+                    <th>Statut</th>
+                    <th>Joueurs</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="t : ${teams.content}">
+                    <td th:text="${t.nom}"></td>
+                    <td th:text="${t.ville}"></td>
+                    <td th:text="${t.entraineur}"></td>
+                    <td><span class="badge bg-info" th:text="${t.statut}"></span></td>
+                    <td th:text="${t.nombreJoueurs}"></td>
+                    <td>
+                        <a th:href="@{/teams/{id}(id=${t.id})}" class="btn btn-sm btn-outline-primary">Voir</a>
+                        <a th:href="@{/teams/{id}/edit(id=${t.id})}" class="btn btn-sm btn-outline-warning"
+                           sec:authorize="hasAnyRole('ADMIN','MANAGER')">Modifier</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <nav th:if="${teams.totalPages > 1}">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${teams.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/teams(page=${teams.number - 1})}">Précédent</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, teams.totalPages - 1)}"
+                    th:classappend="${i == teams.number} ? 'active'">
+                    <a class="page-link" th:href="@{/teams(page=${i})}" th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${teams.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/teams(page=${teams.number + 1})}">Suivant</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <div th:unless="${teams != null and !teams.content.isEmpty()}" class="alert alert-info">
+        Aucune équipe trouvée.
+    </div>
+</div>
+</html>

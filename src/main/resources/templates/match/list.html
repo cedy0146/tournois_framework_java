@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Matchs - <span th:text="${tournament.nom}"></span></h2>
+        <div>
+            <a th:href="@{/tournaments/{id}(id=${tournament.id})}" class="btn btn-outline-secondary">Retour</a>
+            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-info">Classement</a>
+        </div>
+    </div>
+
+    <div class="table-responsive" th:if="${matches != null and !matches.isEmpty()}">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Phase</th>
+                    <th>Tour</th>
+                    <th>Date</th>
+                    <th>Heure</th>
+                    <th>Domicile</th>
+                    <th>Score</th>
+                    <th>Visiteur</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="m : ${matches}">
+                    <td th:text="${m.id}"></td>
+                    <td><span class="badge bg-secondary" th:text="${m.phase}"></span></td>
+                    <td th:text="${m.tour}"></td>
+                    <td th:text="${m.date}"></td>
+                    <td th:text="${m.heure}"></td>
+                    <td th:text="${m.equipeDomicileNom}"></td>
+                    <td>
+                        <span th:if="${m.scoreDomicile != null}" th:text="${m.scoreDomicile + ' - ' + m.scoreVisiteur}"></span>
+                        <span th:unless="${m.scoreDomicile != null}">-</span>
+                    </td>
+                    <td th:text="${m.equipeVisiteurNom}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${m.statut == 'TERMINE'} ? 'bg-success' : (${m.statut == 'PROGRAMME'} ? 'bg-warning' : 'bg-info')"
+                              th:text="${m.statut}"></span>
+                    </td>
+                    <td>
+                        <a th:if="${m.statut != 'TERMINE' and m.statut != 'ANNULE'}"
+                           th:href="@{/tournaments/{tid}/matches/{id}/result(tid=${tournament.id}, id=${m.id})}"
+                           class="btn btn-sm btn-outline-success"
+                           sec:authorize="hasAnyRole('OPERATOR','MANAGER','ADMIN')">Saisir résultat</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:unless="${matches != null and !matches.isEmpty()}" class="alert alert-info">
+        Aucun match pour ce tournoi.
+        <form th:action="@{/tournaments/{id}/generate-matches(id=${tournament.id})}" method="post" class="d-inline"
+              sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+            <button type="submit" class="btn btn-success btn-sm">Générer les matchs</button>
+        </form>
+    </div>
+</div>
+</html>

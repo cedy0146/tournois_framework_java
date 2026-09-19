@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Classement - <span th:text="${tournament.nom}"></span></h2>
+        <div>
+            <a th:href="@{/tournaments/{id}(id=${tournament.id})}" class="btn btn-outline-secondary">Retour</a>
+            <a th:href="@{/tournaments/{id}/matches(id=${tournament.id})}" class="btn btn-info">Matchs</a>
+        </div>
+    </div>
+
+    <div class="table-responsive" th:if="${rankings != null and !rankings.isEmpty()}">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Équipe</th>
+                    <th>J</th>
+                    <th>G</th>
+                    <th>N</th>
+                    <th>P</th>
+                    <th>Pts</th>
+                    <th>BP</th>
+                    <th>BC</th>
+                    <th>DB</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="r : ${rankings}">
+                    <td>
+                        <span th:if="${r.classement == 1}" class="badge bg-warning">1er</span>
+                        <span th:if="${r.classement == 2}" class="badge bg-secondary">2e</span>
+                        <span th:if="${r.classement == 3}" class="badge bg-info">3e</span>
+                        <span th:if="${r.classement > 3}" th:text="${r.classement}"></span>
+                    </td>
+                    <td th:text="${r.teamNom}"></td>
+                    <td th:text="${r.matchsJoues}"></td>
+                    <td th:text="${r.victoires}"></td>
+                    <td th:text="${r.nuls}"></td>
+                    <td th:text="${r.defaites}"></td>
+                    <td><strong th:text="${r.points}"></strong></td>
+                    <td th:text="${r.butsMarques}"></td>
+                    <td th:text="${r.butsEncaisses}"></td>
+                    <td>
+                        <span th:if="${r.diffButs > 0}" class="text-success" th:text="'+' + ${r.diffButs}"></span>
+                        <span th:if="${r.diffButs == 0}" th:text="${r.diffButs}"></span>
+                        <span th:if="${r.diffButs < 0}" class="text-danger" th:text="${r.diffButs}"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:unless="${rankings != null and !rankings.isEmpty()}" class="alert alert-info">
+        Aucun classement disponible. Des matchs doivent être joués.
+    </div>
+</div>
+</html>
