@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="slides" class="hero-slides" aria-hidden="true">
+    <div class="hero-slide is-active" th:style="'background-image:url(' + @{/img/foot.jpeg} + ')'"></div>
+    <div class="hero-slide" th:style="'background-image:url(' + @{/img/im4.jpg} + ')'"></div>
+    <div class="hero-slide" th:style="'background-image:url(' + @{/img/img2.jpg} + ')'"></div>
+</div>
+</body>
+</html>

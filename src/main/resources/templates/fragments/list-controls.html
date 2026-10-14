@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- ============ BARRE DE FILTRES (à inclure dans un <form> existant) ============ -->
+<div th:fragment="barre (avecRecherche, base)" class="mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4" th:if="${avecRecherche}">
+            <label class="form-label small text-secondary mb-1" for="filtre-recherche">Recherche</label>
+            <input type="search" class="form-control" id="filtre-recherche" name="nom"
+                   placeholder="Nom…" th:value="${filtreNom}"
+                   style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line); padding: 0 1rem;" />
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1" for="filtre-statut">Statut</label>
+            <select class="form-select" id="filtre-statut" name="statut"
+                    style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                <option value="">Tous</option>
+                <option th:each="s : ${statuts}" th:value="${s}" th:text="${s}"
+                        th:selected="${s.name() == filtreStatut}">STATUT</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-secondary mb-1" for="filtre-taille">Par page</label>
+            <select class="form-select" id="filtre-taille" name="size"
+                    style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                <option th:each="n : ${ {5, 10, 20, 50} }" th:value="${n}" th:text="${n}"
+                        th:selected="${n == taille}">10</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-secondary mb-1" for="filtre-tri">Trier par</label>
+            <select class="form-select" id="filtre-tri" name="tri"
+                    style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                <option th:each="c : ${champsTri}" th:value="${c.key}" th:text="${c.value}"
+                        th:selected="${c.key == tri}">Champ</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1">
+            <label class="form-label small text-secondary mb-1" for="filtre-ordre">Sens</label>
+            <select class="form-select" id="filtre-ordre" name="ordre"
+                    style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                <option value="asc" th:selected="${ordre == 'asc'}">↑</option>
+                <option value="desc" th:selected="${ordre == 'desc'}">↓</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">Appliquer</button>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{${base}}">Réinitialiser</a>
+        </div>
+    </div>
+</div>
+
+<!-- ============ PAGINATION ============ -->
+<div th:fragment="pagination (page, base)"
+     th:with="from=${page.number - 2 < 0 ? 0 : (page.number - 2 > page.totalPages - 5 ? page.totalPages - 5 : page.number - 2)},
+              to=${page.number + 2 > page.totalPages - 1 ? page.totalPages - 1 : page.number + 2}"
+     th:if="${page != null and page.totalPages > 1}" class="mt-4">
+    <nav aria-label="Pagination">
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{${base}(page=${page.number - 1}, size=${taille != null ? taille : 10},
+                        tri=${tri != null ? tri : ''}, ordre=${ordre != null ? ordre : ''},
+                        nom=${filtreNom != null ? filtreNom : ''},
+                        statut=${filtreStatut != null ? filtreStatut : ''},
+                        phase=${filtrePhase != null ? filtrePhase : ''},
+                        date=${filtreDate != null ? filtreDate : ''},
+                        tournoi=${filtreTournoi != null ? filtreTournoi : ''})}">Précédent</a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(from, to)}"
+                th:classappend="${i == page.number} ? 'active'">
+                <a class="page-link"
+                   th:href="@{${base}(page=${i}, size=${taille != null ? taille : 10},
+                        tri=${tri != null ? tri : ''}, ordre=${ordre != null ? ordre : ''},
+                        nom=${filtreNom != null ? filtreNom : ''},
+                        statut=${filtreStatut != null ? filtreStatut : ''},
+                        phase=${filtrePhase != null ? filtrePhase : ''},
+                        date=${filtreDate != null ? filtreDate : ''},
+                        tournoi=${filtreTournoi != null ? filtreTournoi : ''})}"
+                   th:text="${i + 1}" th:attr="aria-current=${i == page.number} ? 'page' : null"></a>
+            </li>
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{${base}(page=${page.number + 1}, size=${taille != null ? taille : 10},
+                        tri=${tri != null ? tri : ''}, ordre=${ordre != null ? ordre : ''},
+                        nom=${filtreNom != null ? filtreNom : ''},
+                        statut=${filtreStatut != null ? filtreStatut : ''},
+                        phase=${filtrePhase != null ? filtrePhase : ''},
+                        date=${filtreDate != null ? filtreDate : ''},
+                        tournoi=${filtreTournoi != null ? filtreTournoi : ''})}">Suivant</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+</body>
+</html>

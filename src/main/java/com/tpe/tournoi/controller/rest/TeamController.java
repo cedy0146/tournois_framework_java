@@ -5,7 +5,7 @@ import com.tpe.tournoi.dto.response.*;
 import com.tpe.tournoi.service.TeamService;
 import com.tpe.tournoi.service.PlayerService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -18,11 +18,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/teams")
-@RequiredArgsConstructor
 public class TeamController {
 
     private final TeamService teamService;
     private final PlayerService playerService;
+
+    public TeamController(TeamService teamService, PlayerService playerService) {
+        this.teamService = teamService;
+        this.playerService = playerService;
+    }
 
     @PostMapping
     public ResponseEntity<TeamResponse> create(@Valid @RequestBody CreateTeamRequest request) {

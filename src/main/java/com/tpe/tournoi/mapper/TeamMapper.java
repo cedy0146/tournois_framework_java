@@ -1,14 +1,27 @@
 package com.tpe.tournoi.mapper;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.tpe.tournoi.dto.response.PlayerResponse;
 import com.tpe.tournoi.dto.response.TeamResponse;
 import com.tpe.tournoi.entity.Team;
-import org.springframework.stereotype.Component;
-import java.util.List;
 
 @Component
 public class TeamMapper {
 
+    private final PlayerMapper playerMapper;
+
+    public TeamMapper(PlayerMapper playerMapper) {
+        this.playerMapper = playerMapper;
+    }
+
     public TeamResponse toResponse(Team t) {
+        List<PlayerResponse> joueurs = t.getJoueurs() == null
+                ? List.of()
+                : playerMapper.toResponseList(t.getJoueurs());
+
         return TeamResponse.builder()
                 .id(t.getId())
                 .nom(t.getNom())
@@ -16,7 +29,8 @@ public class TeamMapper {
                 .ville(t.getVille())
                 .entraineur(t.getEntraineur())
                 .statut(t.getStatut().name())
-                .nombreJoueurs(t.getJoueurs().size())
+                .nombreJoueurs(joueurs.size())
+                .joueurs(joueurs)
                 .build();
     }
 

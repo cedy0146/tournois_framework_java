@@ -9,5 +9,13 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "description": ""
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cedy0146/tournois_framework_java.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cedy0146/tournois_framework_java/issues"
+  },
+  "homepage": "https://github.com/cedy0146/tournois_framework_java#readme",
+  "description": "Application **Spring Boot** (L3 — Framework Java) pour créer, planifier et suivre des compétitions sportives : championnats (aller-retour ou match unique) et coupes à élimination directe."
 }

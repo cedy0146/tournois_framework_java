@@ -35,4 +35,6 @@ public interface TournamentRepository extends JpaRepository<Tournament, Long> {
                                    Pageable pageable);
 
     List<Tournament> findByStatutIn(List<TournamentStatus> statuts);
+
+    long countByStatutIn(java.util.Collection<TournamentStatus> statuts);
 }

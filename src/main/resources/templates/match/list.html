@@ -1,66 +1,66 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: html}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: html}">
 <div th:fragment="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Matchs - <span th:text="${tournament.nom}"></span></h2>
-        <div>
-            <a th:href="@{/tournaments/{id}(id=${tournament.id})}" class="btn btn-outline-secondary">Retour</a>
-            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-info">Classement</a>
+    <section class="app-page-head reveal">
+        <span class="eyebrow">Matchs</span>
+        <h1>Matchs <em class="lp-accent lp-accent--plain">du tournoi</em></h1>
+        <p>Saisissez les résultats et suivez l'évolution des rencontres.</p>
+        <div class="btn-group">
+            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-outline-secondary">Classement</a>
+            <a th:href="@{/tournaments/{id}/matches/bracket(id=${tournament.id})}" th:if="${tournament.type == 'ELIMINATION_DIRECTE'}" class="btn btn-outline-primary ml-2">Voir l'arbre</a>
+        </div>
+    </section>
+
+    <form method="get" th:action="@{/tournaments/{id}/matches(id=${tournament.id})}" class="mb-4" aria-label="Filtres des matchs">
+        <div th:replace="~{fragments/list-controls :: barre(false, ${'/tournaments/' + tournament.id + '/matches'})}" />
+        <div class="row g-2">
+            <div class="col-6 col-md-3">
+                <label class="form-label small text-secondary mb-1" for="filtre-phase">Phase</label>
+                <select class="form-select" id="filtre-phase" name="phase"
+                        style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                    <option value="">Toutes</option>
+                    <option th:each="p : ${phases}" th:value="${p}" th:text="${p}"
+                            th:selected="${p.name() == filtrePhase}">PHASE</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <div th:unless="${matches != null and !matches.content.isEmpty()}" class="empty-state text-center">
+        <i class="bi bi-calendar2-x"></i>
+        <h3>Aucun match programmé</h3>
+        <p>Générez la grille du tournoi pour lancer la compétition.</p>
+    </div>
+
+    <div class="match-grid" th:if="${matches != null and !matches.content.isEmpty()}">
+        <div class="match-card card" th:each="m : ${matches.content}">
+            <div class="match-teams">
+                <div class="match-team match-team-a">
+                    <span th:text="${m.equipeDomicileNom}" class="fw-bold"></span>
+                </div>
+                <div class="match-score text-center">
+                    <span th:if="${m.scoreDomicile != null and m.scoreVisiteur != null}"
+                          class="match-score-number fw-bold" th:text="|${m.scoreDomicile} - ${m.scoreVisiteur}|">0 - 0</span>
+                    <span th:if="${m.scoreDomicile == null or m.scoreVisiteur == null}"
+                          class="match-score-pending fw-bold">– : –</span>
+                </div>
+                <div class="match-team match-team-b">
+                    <span th:text="${m.equipeVisiteurNom}" class="fw-bold"></span>
+                </div>
+            </div>
+            <div class="match-meta text-secondary small">
+                <span>Date : </span><span th:text="${m.date}">JJ/MM/AAAA</span>
+                <span class="mx-2">|</span>
+                <span>Phase : </span><span th:text="${m.phase}">Programmé</span>
+                <span class="match-badge match-badge-sm" th:classappend="${m.statut == 'TERMINE'} ? 'success' : (${m.statut == 'EN_COURS'} ? 'info' : (${m.statut == 'PROGRAMME'} ? 'warning' : 'secondary'))"
+                      th:text="${m.statut}">TERMINE</span>
+                <a th:if="${m.statut != 'TERMINE' and m.statut != 'ANNULE'}"
+                   th:href="@{/tournaments/{tid}/matches/{id}/result(tid=${tournament.id}, id=${m.id})}"
+                   class="btn btn-link btn-sm text-decoration-underline ms-2">Saisir résultat</a>
+            </div>
         </div>
     </div>
 
-    <div class="table-responsive" th:if="${matches != null and !matches.isEmpty()}">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Phase</th>
-                    <th>Tour</th>
-                    <th>Date</th>
-                    <th>Heure</th>
-                    <th>Domicile</th>
-                    <th>Score</th>
-                    <th>Visiteur</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="m : ${matches}">
-                    <td th:text="${m.id}"></td>
-                    <td><span class="badge bg-secondary" th:text="${m.phase}"></span></td>
-                    <td th:text="${m.tour}"></td>
-                    <td th:text="${m.date}"></td>
-                    <td th:text="${m.heure}"></td>
-                    <td th:text="${m.equipeDomicileNom}"></td>
-                    <td>
-                        <span th:if="${m.scoreDomicile != null}" th:text="${m.scoreDomicile + ' - ' + m.scoreVisiteur}"></span>
-                        <span th:unless="${m.scoreDomicile != null}">-</span>
-                    </td>
-                    <td th:text="${m.equipeVisiteurNom}"></td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${m.statut == 'TERMINE'} ? 'bg-success' : (${m.statut == 'PROGRAMME'} ? 'bg-warning' : 'bg-info')"
-                              th:text="${m.statut}"></span>
-                    </td>
-                    <td>
-                        <a th:if="${m.statut != 'TERMINE' and m.statut != 'ANNULE'}"
-                           th:href="@{/tournaments/{tid}/matches/{id}/result(tid=${tournament.id}, id=${m.id})}"
-                           class="btn btn-sm btn-outline-success"
-                           sec:authorize="hasAnyRole('OPERATOR','MANAGER','ADMIN')">Saisir résultat</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div th:unless="${matches != null and !matches.isEmpty()}" class="alert alert-info">
-        Aucun match pour ce tournoi.
-        <form th:action="@{/tournaments/{id}/generate-matches(id=${tournament.id})}" method="post" class="d-inline"
-              sec:authorize="hasAnyRole('ADMIN','MANAGER')">
-            <button type="submit" class="btn btn-success btn-sm">Générer les matchs</button>
-        </form>
-    </div>
+    <div th:replace="~{fragments/list-controls :: pagination(page=${matches}, base=${'/tournaments/' + tournament.id + '/matches'})}" />
 </div>
 </html>

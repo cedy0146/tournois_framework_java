@@ -1,69 +1,156 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: html}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}">
 <div th:fragment="content">
-    <h2 class="mb-4">Nouveau Tournoi</h2>
+    <section class="app-page-head reveal">
+        <h2>Nouveau tournoi</h2>
+        <div class="btn-group">
+            <a th:href="@{/tournaments}" class="btn btn-outline-secondary">Retour</a>
+        </div>
+    </section>
 
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <form th:action="@{/tournaments}" th:object="${tournament}" method="post" class="card p-4">
-
-                <div class="mb-3">
-                    <label class="form-label">Nom *</label>
-                    <input type="text" class="form-control" th:field="*{nom}" th:classappend="${#fields.hasErrors('nom')} ? 'is-invalid'"/>
+    <div class="card mx-auto" style="max-width: 760px; border-radius: 24px; padding: 2rem; background: var(--card);">
+        <form th:fragment="theForm" id="tournamentCreateForm" th:action="@{/tournaments}" th:object="${tournament}" method="post" data-modal-form data-success-message="Tournoi créé avec succès">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="nom">Nom du tournoi *</label>
+                    <input type="text" class="form-control" id="nom" th:field="*{nom}" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;"
+                           th:classappend="${#fields.hasErrors('nom')} ? 'is-invalid'" />
                     <div class="invalid-feedback" th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}"></div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Sport *</label>
-                    <input type="text" class="form-control" th:field="*{sport}" th:classappend="${#fields.hasErrors('sport')} ? 'is-invalid'"/>
+                <div class="form-group">
+                    <label class="form-label" for="sport">Sport *</label>
+                    <input type="text" class="form-control" id="sport" th:field="*{sport}" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;"
+                           th:classappend="${#fields.hasErrors('sport')} ? 'is-invalid'" />
                     <div class="invalid-feedback" th:if="${#fields.hasErrors('sport')}" th:errors="*{sport}"></div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" th:field="*{description}"></textarea>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Date début *</label>
-                        <input type="date" class="form-control" th:field="*{dateDebut}" th:classappend="${#fields.hasErrors('dateDebut')} ? 'is-invalid'"/>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('dateDebut')}" th:errors="*{dateDebut}"></div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Date fin *</label>
-                        <input type="date" class="form-control" th:field="*{dateFin}" th:classappend="${#fields.hasErrors('dateFin')} ? 'is-invalid'"/>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('dateFin')}" th:errors="*{dateFin}"></div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Lieu</label>
-                    <input type="text" class="form-control" th:field="*{lieu}"/>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Nombre max d'équipes *</label>
-                    <input type="number" class="form-control" th:field="*{nombreMaxEquipes}" min="2" th:classappend="${#fields.hasErrors('nombreMaxEquipes')} ? 'is-invalid'"/>
-                    <div class="invalid-feedback" th:if="${#fields.hasErrors('nombreMaxEquipes')}" th:errors="*{nombreMaxEquipes}"></div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Type *</label>
-                    <select class="form-select" th:field="*{type}">
-                        <option value="">-- Choisir --</option>
+                <div class="form-group">
+                    <label class="form-label" for="type">Type *</label>
+                    <select class="form-select" id="type" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;"
+                           th:field="*{type}">
+                        <option value="">-- Sélectionner --</option>
                         <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
                     </select>
                 </div>
 
-                <div class="text-end">
-                    <a th:href="@{/tournaments}" class="btn btn-secondary">Annuler</a>
-                    <button type="submit" class="btn btn-primary">Créer</button>
+                <div class="form-group">
+                    <label class="form-label" for="dateDebut">Date de début *</label>
+                    <input type="date" class="form-control" id="dateDebut" th:field="*{dateDebut}" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;"
+                           th:classappend="${#fields.hasErrors('dateDebut')} ? 'is-invalid'" />
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('dateDebut')}" th:errors="*{dateDebut}"></div>
                 </div>
-            </form>
+
+                <div class="form-group">
+                    <label class="form-label" for="dateFin">Date de fin *</label>
+                    <input type="date" class="form-control" id="dateFin" th:field="*{dateFin}" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;"
+                           th:classappend="${#fields.hasErrors('dateFin')} ? 'is-invalid'" />
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('dateFin')}" th:errors="*{dateFin}"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="nombreMaxEquipes">Nombre max d'équipes *</label>
+                    <input type="number" class="form-control" id="nombreMaxEquipes" th:field="*{nombreMaxEquipes}" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;"
+                           th:classappend="${#fields.hasErrors('nombreMaxEquipes')} ? 'is-invalid'" />
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('nombreMaxEquipes')}" th:errors="*{nombreMaxEquipes}"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="terrains">Terrains</label>
+                    <input type="text" class="form-control" id="terrains" th:field="*{terrains}" placeholder="Terrain 1, Terrain 2"
+                           style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pointsVictoire">Points victoire</label>
+                    <input type="number" class="form-control" id="pointsVictoire" th:field="*{pointsVictoire}"
+                           style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pointsNul">Points match nul</label>
+                    <input type="number" class="form-control" id="pointsNul" th:field="*{pointsNul}"
+                           style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pointsDefaite">Points défaite</label>
+                    <input type="number" class="form-control" id="pointsDefaite" th:field="*{pointsDefaite}"
+                           style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;" />
+                </div>
+
+                <div class="form-group full">
+                    <label class="form-label">Critères de classement (du plus important au moins important)</label>
+                    <div class="form-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;">
+                        <div>
+                            <label class="form-label small mb-1" for="critere1">1er critère</label>
+                            <select class="form-select" id="critere1" th:field="*{critere1}"
+                                    style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;">
+                                <option th:each="c : ${criteres}" th:value="${c}" th:text="${c}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1" for="critere2">2e critère</label>
+                            <select class="form-select" id="critere2" th:field="*{critere2}"
+                                    style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;">
+                                <option value="">Aucun</option>
+                                <option th:each="c : ${criteres}" th:value="${c}" th:text="${c}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1" for="critere3">3e critère</label>
+                            <select class="form-select" id="critere3" th:field="*{critere3}"
+                                    style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;">
+                                <option value="">Aucun</option>
+                                <option th:each="c : ${criteres}" th:value="${c}" th:text="${c}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1" for="critere4">4e critère</label>
+                            <select class="form-select" id="critere4" th:field="*{critere4}"
+                                    style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;">
+                                <option value="">Aucun</option>
+                                <option th:each="c : ${criteres}" th:value="${c}" th:text="${c}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label class="form-label" for="lieu">Lieu</label>
+                    <input type="text" class="form-control" id="lieu" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem;" th:field="*{lieu}" />
+                </div>
+
+                <div class="form-group full">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-control" id="description" style="height: 48px; border-radius: 14px; background: var(--card-alt); border: 1px var(--line); padding: 0 1rem; resize: vertical;"
+                              th:field="*{description}"></textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="form-actions">
+        <a th:href="@{/tournaments}" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary w-100" sec:authorize="hasAnyRole('ADMIN','MANAGER')">Créer le tournoi</button>
+    </div>
+</div>
+
+<div th:fragment="modalContent" class="modal-fragment">
+    <div class="modal-header">
+        <h2 class="modal-title fs-5" id="appModalTitle">Nouveau tournoi</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+    </div>
+    <div class="modal-body">
+        <div th:if="${error != null}" class="alert custom-alert danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            <span th:text="${error}"></span>
         </div>
+        <div th:replace="~{:: theForm}"></div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" form="tournamentCreateForm" class="btn btn-primary" sec:authorize="hasAnyRole('ADMIN','MANAGER')">Créer le tournoi</button>
     </div>
 </div>
 </html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- ============ MODAL DE CONNEXION (partagé : layout + landing) ============ -->
+<div th:fragment="modal" class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalTitle" aria-hidden="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content lp-login-modal" data-login-panel>
+
+            <button type="button" class="lp-login-close" data-bs-dismiss="modal" aria-label="Fermer">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+
+            <div class="lp-login-grid">
+
+                <!-- Panneau gauche : vitrine (caché sur mobile) -->
+                <aside class="lp-login-aside" aria-hidden="true">
+                    <span class="lp-login-logo"><i class="bi bi-trophy-fill"></i></span>
+                    <h3 class="lp-login-aside-title">Gérez chaque match <em class="lp-accent lp-accent--plain">comme un pro</em></h3>
+                    <ul class="lp-login-points">
+                        <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Tournois et équipes</li>
+                        <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Classements en direct</li>
+                        <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Résultats en temps réel</li>
+                    </ul>
+                    <div class="lp-login-season">
+                        <span class="lp-login-season-label">Saison en cours</span>
+                        <strong>Été 2026</strong>
+                        <small>Tout votre football, au même endroit.</small>
+                    </div>
+                </aside>
+
+                <!-- Panneau droit : formulaire -->
+                <section class="lp-login-main">
+                    <span class="lp-login-kicker">Connexion</span>
+                    <h2 id="loginModalTitle">Bon <em class="lp-accent lp-accent--plain">retour</em> parmi nous</h2>
+                    <p class="lp-login-sub">Connectez-vous pour retrouver votre saison.</p>
+
+                    <div th:if="${param.error != null}" class="lp-login-alert lp-login-alert--error" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                        <span>Identifiant ou mot de passe incorrect.</span>
+                    </div>
+                    <div th:if="${param.logout != null}" class="lp-login-alert lp-login-alert--success" role="status">
+                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                        <span>Vous êtes déconnecté.</span>
+                    </div>
+
+                    <form th:action="@{/login}" method="post" class="lp-login-form" data-login-form>
+                        <div class="lp-login-field">
+                            <i class="bi bi-person lp-login-field__icon" aria-hidden="true"></i>
+                            <input class="lp-login-field__input" type="text" id="loginUsername" name="username"
+                                   placeholder="Identifiant" autocomplete="username" required>
+                            <label class="lp-login-field__label" for="loginUsername">Identifiant</label>
+                            <span class="lp-login-field__error">Champ requis</span>
+                        </div>
+
+                        <div class="lp-login-field">
+                            <i class="bi bi-lock lp-login-field__icon" aria-hidden="true"></i>
+                            <input class="lp-login-field__input" type="password" id="loginPassword" name="password"
+                                   placeholder="Mot de passe" autocomplete="current-password" required>
+                            <label class="lp-login-field__label" for="loginPassword">Mot de passe</label>
+                            <button type="button" class="lp-login-field__eye" data-password-toggle aria-label="Afficher le mot de passe">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                            <span class="lp-login-field__error">Champ requis</span>
+                        </div>
+
+                        <p class="lp-login-caps" data-caps-warning hidden>
+                            <i class="bi bi-capslock-fill" aria-hidden="true"></i> Verr. Maj activé
+                        </p>
+
+                        <button type="submit" class="lp-login-submit" data-login-submit>
+                            <span class="lp-login-submit-label">Se connecter</span>
+                            <span class="lp-login-submit-loading"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Connexion…</span>
+                        </button>
+                    </form>
+                </section>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

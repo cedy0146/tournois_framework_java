@@ -7,8 +7,9 @@ import com.tpe.tournoi.repository.RankingRepository;
 import com.tpe.tournoi.repository.TournamentMatchRepository;
 import com.tpe.tournoi.repository.TournamentRepository;
 import com.tpe.tournoi.repository.TournamentTeamRepository;
+import com.tpe.tournoi.exception.ResourceNotFoundException;
 import com.tpe.tournoi.service.RankingService;
-import lombok.RequiredArgsConstructor;
+import com.tpe.tournoi.util.RankingUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +17,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class RankingServiceImpl implements RankingService {
 
     private final RankingRepository rankingRepo;
@@ -25,15 +25,29 @@ public class RankingServiceImpl implements RankingService {
     private final TournamentRepository tournamentRepo;
     private final RankingMapper mapper;
 
+    public RankingServiceImpl(RankingRepository rankingRepo, TournamentMatchRepository matchRepo,
+                              TournamentTeamRepository tournamentTeamRepo, TournamentRepository tournamentRepo,
+                              RankingMapper mapper) {
+        this.rankingRepo = rankingRepo;
+        this.matchRepo = matchRepo;
+        this.tournamentTeamRepo = tournamentTeamRepo;
+        this.tournamentRepo = tournamentRepo;
+        this.mapper = mapper;
+    }
+
     @Override
     @Transactional(readOnly = true)
+    public List<RankingResponse> getAllRankings() {
+        return rankingRepo.findAllWithTournamentAndTeam().stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
     public List<RankingResponse> getRanking(Long tournamentId) {
+        recalculateRankings(tournamentId);
         List<Ranking> rankings = rankingRepo.findByTournamentIdOrderByClassementAsc(tournamentId);
-        if (rankings.isEmpty()) {
-            // Calculer si pas encore de classement
-            recalculateRankings(tournamentId);
-            rankings = rankingRepo.findByTournamentIdOrderByClassementAsc(tournamentId);
-        }
         return rankings.stream().map(mapper::toResponse).toList();
     }
 
@@ -41,10 +55,16 @@ public class RankingServiceImpl implements RankingService {
     @Transactional
     public void recalculateRankings(Long tournamentId) {
         Tournament tournament = tournamentRepo.findById(tournamentId)
-                .orElseThrow(() -> new com.tpe.tournoi.exception.ResourceNotFoundException("Tournoi", tournamentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Tournoi", tournamentId));
 
         // Supprimer les anciens classements
         rankingRepo.deleteByTournamentId(tournamentId);
+
+        // Le classement n'a de sens que pour les championnats :
+        // en élimination directe on ne produit pas de classement de poule trompeur.
+        if (tournament.getType() == TournamentType.ELIMINATION_DIRECTE) {
+            return;
+        }
 
         List<Team> teams = tournamentTeamRepo.findByTournamentIdAndInscriptionStatut(
                         tournamentId, RegistrationStatus.INSCRIT)
@@ -54,7 +74,9 @@ public class RankingServiceImpl implements RankingService {
 
         List<TournamentMatch> finishedMatches = matchRepo.findByTournamentId(tournamentId)
                 .stream()
-                .filter(m -> m.getStatut() == MatchStatus.TERMINE && m.getPhase() == MatchPhase.POULE)
+                .filter(m -> m.getStatut() == MatchStatus.TERMINE)
+                .filter(m -> m.getEquipeDomicile() != null && m.getEquipeVisiteur() != null)
+                .filter(m -> m.getScoreDomicile() != null && m.getScoreVisiteur() != null)
                 .toList();
 
         Map<Long, Ranking> rankingMap = new HashMap<>();
@@ -74,6 +96,10 @@ public class RankingServiceImpl implements RankingService {
             rankingMap.put(team.getId(), ranking);
         }
 
+        int pointsVictoire = tournament.getPointsVictoire();
+        int pointsNul = tournament.getPointsNul();
+        int pointsDefaite = tournament.getPointsDefaite();
+
         for (TournamentMatch match : finishedMatches) {
             Ranking homeRank = rankingMap.get(match.getEquipeDomicile().getId());
             Ranking awayRank = rankingMap.get(match.getEquipeVisiteur().getId());
@@ -91,29 +117,32 @@ public class RankingServiceImpl implements RankingService {
             awayRank.setButsMarques(awayRank.getButsMarques() + sv);
             awayRank.setButsEncaisses(awayRank.getButsEncaisses() + sd);
 
-            if (sd > sv) {
+            boolean homeGagne = sd > sv;
+            boolean awayGagne = sv > sd;
+
+            if (homeGagne) {
                 homeRank.setVictoires(homeRank.getVictoires() + 1);
-                homeRank.setPoints(homeRank.getPoints() + 3);
+                homeRank.setPoints(homeRank.getPoints() + pointsVictoire);
                 awayRank.setDefaites(awayRank.getDefaites() + 1);
-            } else if (sd < sv) {
+                awayRank.setPoints(awayRank.getPoints() + pointsDefaite);
+            } else if (awayGagne) {
                 awayRank.setVictoires(awayRank.getVictoires() + 1);
-                awayRank.setPoints(awayRank.getPoints() + 3);
+                awayRank.setPoints(awayRank.getPoints() + pointsVictoire);
                 homeRank.setDefaites(homeRank.getDefaites() + 1);
+                homeRank.setPoints(homeRank.getPoints() + pointsDefaite);
             } else {
                 homeRank.setNuls(homeRank.getNuls() + 1);
                 awayRank.setNuls(awayRank.getNuls() + 1);
-                homeRank.setPoints(homeRank.getPoints() + 1);
-                awayRank.setPoints(awayRank.getPoints() + 1);
+                homeRank.setPoints(homeRank.getPoints() + pointsNul);
+                awayRank.setPoints(awayRank.getPoints() + pointsNul);
             }
         }
 
-        // Tri : points DESC, différence de buts DESC, buts marqués DESC
-        List<Ranking> sortedRankings = rankingMap.values().stream()
-                .sorted(Comparator
-                        .comparingInt(Ranking::getPoints).reversed()
-                        .thenComparing(r -> r.getDiffButs(), Comparator.reverseOrder())
-                        .thenComparingInt(Ranking::getButsMarques).reversed())
-                .collect(Collectors.toList());
+        // Tri dynamique selon les critères configurés (confrontation directe comprise)
+        List<RankingCriterion> criteres = RankingUtil.parse(tournament.getCriteresClassement());
+        List<Ranking> sortedRankings = RankingUtil.sort(
+                new ArrayList<>(rankingMap.values()), criteres, finishedMatches,
+                pointsVictoire, pointsNul, pointsDefaite);
 
         for (int i = 0; i < sortedRankings.size(); i++) {
             Ranking r = sortedRankings.get(i);

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <section class="app-page-head reveal">
+        <span class="eyebrow">Erreur <span th:text="${status != null ? status : '—'}">500</span></span>
+        <h1 th:text="${status == 404 ? 'Page introuvable' : (status == 403 ? 'Accès refusé' : 'Une erreur est survenue')}">
+            Une erreur est survenue
+        </h1>
+        <p th:text="${message != null ? message : 'La ressource demandée est indisponible.'}">
+            La ressource demandée est indisponible.
+        </p>
+        <div class="btn-group">
+            <a th:href="@{/dashboard}" class="btn btn-primary">Retour au tableau de bord</a>
+            <a th:href="@{/}" class="btn btn-outline-light">Accueil</a>
+        </div>
+    </section>
+
+    <div class="data-card">
+        <div class="info-grid">
+            <div class="info-item">
+                <span>Code</span>
+                <strong th:text="${status != null ? status : '—'}">500</strong>
+            </div>
+            <div class="info-item">
+                <span>Détail</span>
+                <strong th:text="${error != null ? error : (status == 404 ? 'Ressource introuvable' : (status == 403 ? 'Accès refusé' : 'Erreur interne'))}">Erreur</strong>
+            </div>
+            <div class="info-item">
+                <span>Page</span>
+                <strong th:text="${path != null ? path : currentUri}">—</strong>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

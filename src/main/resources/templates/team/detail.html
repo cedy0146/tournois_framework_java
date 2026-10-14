@@ -1,41 +1,195 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: html}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: html}">
 <div th:fragment="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <section class="app-page-head reveal">
         <h2 th:text="${team.nom}">Équipe</h2>
-        <div>
-            <a th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-warning"
-               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Modifier</a>
+        <div class="btn-group">
+            <a th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-outline-secondary" sec:authorize="hasAnyRole('ADMIN','MANAGER')" data-modal-url data-modal-size="md">Modifier</a>
+        </div>
+    </section>
+
+    <div th:replace="~{:: detailBody}"></div>
+</div>
+
+<div th:fragment="detailBody">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="data-card">
+                <div class="section-header mb-3">
+                    <div>
+                        <span class="section-kicker">Profil</span>
+                        <h3 class="mt-2">Fiche équipe</h3>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span>Ville</span>
+                        <strong th:text="${team.ville != null ? team.ville : 'Non défini'}">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Entraîneur</span>
+                        <strong th:text="${team.entraineur != null ? team.entraineur : 'Non défini'}">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Statut</span>
+                        <strong th:text="${team.statut}">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Joueurs</span>
+                        <strong th:text="${team.nombreJoueurs}">0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="data-card">
+                <div class="section-header mb-3">
+                    <div>
+                        <span class="section-kicker">Effectif</span>
+                        <h3 class="mt-2">Joueurs</h3>
+                    </div>
+                </div>
+
+                <div th:if="${team.nombreJoueurs > 0}" class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Poste</th>
+                                <th>Numéro</th>
+                            </thead>
+                            <tbody>
+                                <tr th:each="j : ${team.joueurs}">
+                                    <td class="podium-name" th:text="${j.nom}">Nom</td>
+                                    <td th:text="${j.poste}">Poste</td>
+                                    <td th:text="${j.numero}">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </table>
+                </div>
+
+                <div th:unless="${team.nombreJoueurs > 0}" class="empty-state mt-3">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <h3>Aucun joueur inscrit</h3>
+                    <p>Cette équipe n'a pas encore d'effectif.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="data-card">
+                <div class="section-header mb-3">
+                    <div>
+                        <span class="section-kicker">Statistiques</span>
+                        <h3 class="mt-2">Bilan de l'équipe</h3>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span>Matchs joués</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.matchsJoues : 0}">0</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Victoires</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.victoires : 0}">0</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Nuls</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.nuls : 0}">0</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Défaites</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.defaites : 0}">0</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Buts marqués</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.butsMarques : 0}">0</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Buts encaissés</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.butsEncaisses : 0}">0</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Différence de buts</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.differenceButs : 0}">0</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Points (3/1/0)</span>
+                        <strong th:text="${statsEquipe != null ? statsEquipe.points : 0}">0</strong>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <p><strong>Ville :</strong> <span th:text="${team.ville} ?: 'Non défini'"></span></p>
-            <p><strong>Entraîneur :</strong> <span th:text="${team.entraineur} ?: 'Non défini'"></span></p>
-            <p><strong>Statut :</strong> <span class="badge bg-info" th:text="${team.statut}"></span></p>
+    <div class="data-card mt-4">
+        <div class="section-header mb-3">
+            <div>
+                <span class="section-kicker">Historique</span>
+                <h3 class="mt-2">Matchs de l'équipe</h3>
+            </div>
+            <span class="status-badge info"
+                  th:text="${matchsEquipe != null ? matchsEquipe.totalElements : 0} + ' rencontres'">0 rencontres</span>
+        </div>
+
+        <div class="table-responsive" th:if="${matchsEquipe != null and !matchsEquipe.content.isEmpty()}">
+            <table class="table-custom">
+                <caption class="visually-hidden" th:text="|Historique des matchs - ${team.nom}|">Historique</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Tournoi</th>
+                        <th scope="col">Adversaire</th>
+                        <th scope="col">Score</th>
+                        <th scope="col">Phase</th>
+                        <th scope="col">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="m : ${matchsEquipe.content}">
+                        <td th:text="${m.date}">Date</td>
+                        <td th:text="${m.tournamentNom}">Tournoi</td>
+                        <td th:text="${m.equipeDomicileId == team.id ? m.equipeVisiteurNom : m.equipeDomicileNom}">Adversaire</td>
+                        <td>
+                            <span th:if="${m.scoreDomicile != null and m.scoreVisiteur != null}"
+                                  class="fw-bold" th:text="|${m.scoreDomicile} - ${m.scoreVisiteur}|">0 - 0</span>
+                            <span th:if="${m.scoreDomicile == null or m.scoreVisiteur == null}">—</span>
+                        </td>
+                        <td th:text="${m.phase}">POULE</td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${m.statut == 'TERMINE'} ? 'success' : (${m.statut == 'ANNULE' or m.statut == 'REPORTE'} ? 'secondary' : 'warning')"
+                                  th:text="${m.statut}">STATUT</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="empty-state mt-3" th:if="${matchsEquipe == null or matchsEquipe.content.isEmpty()}">
+            <i class="bi bi-calendar2-x"></i>
+            <h3>Aucun match joué</h3>
+            <p>Cette équipe n'a pas encore de rencontre programmée.</p>
         </div>
     </div>
+</div>
+</div>
 
-    <h4>Joueurs</h4>
-    <div class="table-responsive" th:if="${team.nombreJoueurs > 0}">
-        <table class="table table-striped">
-            <thead class="table-dark">
-                <tr><th>Nom</th><th>Poste</th><th>Numéro</th></tr>
-            </thead>
-            <tbody>
-                <tr th:each="j : ${team.joueurs}">
-                    <td th:text="${j.nom}"></td>
-                    <td th:text="${j.poste}"></td>
-                    <td th:text="${j.numero}"></td>
-                </tr>
-            </tbody>
-        </table>
+<div th:fragment="modalContent" class="modal-fragment">
+    <div class="modal-header">
+        <h2 class="modal-title fs-5" id="appModalTitle" th:text="${team.nom}">Équipe</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
     </div>
-    <div th:unless="${team.nombreJoueurs > 0}" class="alert alert-info">
-        Aucun joueur dans cette équipe.
+    <div class="modal-body">
+        <div class="modal-detail-actions">
+            <a th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-outline-secondary btn-sm" sec:authorize="hasAnyRole('ADMIN','MANAGER')" data-modal-url data-modal-size="md">Modifier</a>
+        </div>
+        <div th:replace="~{:: detailBody}"></div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
     </div>
 </div>
 </html>

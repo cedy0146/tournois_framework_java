@@ -9,12 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
     Optional<Team> findByNom(String nom);
+
+    long countByStatut(TeamStatus statut);
 
     boolean existsByNom(String nom);
 
@@ -28,4 +31,10 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     Page<Team> findByFilters(@Param("nom") String nom,
                              @Param("statut") TeamStatus statut,
                              Pageable pageable);
+
+    @Query("SELECT t FROM Team t WHERE t.statut = :statut " +
+           "AND NOT EXISTS (SELECT tt FROM TournamentTeam tt " +
+           "WHERE tt.tournament.id = :tournamentId AND tt.team = t)")
+    List<Team> findAvailableForTournament(@Param("tournamentId") Long tournamentId,
+                                          @Param("statut") TeamStatus statut);
 }

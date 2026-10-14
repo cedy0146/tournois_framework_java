@@ -1,59 +1,73 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: html}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}">
 <div th:fragment="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Classement - <span th:text="${tournament.nom}"></span></h2>
-        <div>
-            <a th:href="@{/tournaments/{id}(id=${tournament.id})}" class="btn btn-outline-secondary">Retour</a>
-            <a th:href="@{/tournaments/{id}/matches(id=${tournament.id})}" class="btn btn-info">Matchs</a>
+    <section class="app-page-head reveal">
+        <span class="eyebrow">Classement</span>
+        <h1>Classement <em class="lp-accent lp-accent--plain">du tournoi</em></h1>
+        <p th:if="${tournament != null and tournament.criteresClassement != null and !tournament.criteresClassement.isEmpty()}"
+           style="font-size: 0.875rem; color: var(--muted);">
+            <strong>Critères:</strong>
+            <span th:text="${#strings.replace(#strings.replace(tournament.criteresClassement, '_', ' '), ',', ' · ')}"></span>
+        </p>
+        <p>Résultats et positions de toutes les équipes.</p>
+        <div class="btn-group">
+            <a th:href="@{/}" class="btn btn-outline-secondary">Accueil</a>
+        </div>
+    </section>
+
+    <div class="data-card" style="border-radius: 20px; background: var(--card); border: 1px solid var(--line);">
+        <div class="table-responsive">
+            <table class="table-custom">
+                <caption class="visually-hidden">Classement du tournoi</caption>
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 40px;">#</th>
+                        <th scope="col" style="width: 180px;">Équipe</th>
+                        <th scope="col" style="width: 30px;">J</th>
+                        <th scope="col" style="width: 30px;">G</th>
+                        <th scope="col" style="width: 30px;">N</th>
+                        <th scope="col" style="width: 30px;">P</th>
+                        <th scope="col" style="width: 50px;">Pts</th>
+                        <th scope="col" style="width: 40px;">BP</th>
+                        <th scope="col" style="display: none;">BC</th>
+                        <th scope="col" style="width: 40px;">Diff</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="r : ${rankings}">
+                        <td>
+                            <span class="rank-badge"
+                                  th:classappend="${r.classement == 1} ? 'rank-gold' : (${r.classement == 2} ? 'rank-silver' : (${r.classement == 3} ? 'rank-bronze' : 'rank-default'))"
+                                  th:text="${r.classement}">1</span>
+                        </td>
+                        <td class="podium-name">
+                            <span class="team-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(var(--primary-rgb), .15); color: var(--primary-bright); font-weight: 600; display: flex; align-items: center; justify-content: center;">
+                                <span th:text="${r.teamInitiales}">A</span>
+                            </span>
+                            <span th:text="${r.teamNom}">Équipe</span>
+                        </td>
+                        <td th:text="${r.matchsJoues}">0</td>
+                        <td th:text="${r.victoires}">0</td>
+                        <td th:text="${r.nuls}">0</td>
+                        <td th:text="${r.defaites}">0</td>
+                        <td><strong th:text="${r.points}" class="fw-bold">0</strong></td>
+                        <td th:text="${r.butsMarques}">0</td>
+                        <td style="display: none;" th:text="${r.butsEncaisses}">0</td>
+                        <td>
+                            <span th:if="${r.diffButs > 0}" class="diff-positive fw-bold" th:text="'+' + ${r.diffButs}">+0</span>
+                            <span th:if="${r.diffButs == 0}" th:text="${r.diffButs}">0</span>
+                            <span th:if="${r.diffButs < 0}" class="diff-negative" th:text="${r.diffButs}">-0</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="table-responsive" th:if="${rankings != null and !rankings.isEmpty()}">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Équipe</th>
-                    <th>J</th>
-                    <th>G</th>
-                    <th>N</th>
-                    <th>P</th>
-                    <th>Pts</th>
-                    <th>BP</th>
-                    <th>BC</th>
-                    <th>DB</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="r : ${rankings}">
-                    <td>
-                        <span th:if="${r.classement == 1}" class="badge bg-warning">1er</span>
-                        <span th:if="${r.classement == 2}" class="badge bg-secondary">2e</span>
-                        <span th:if="${r.classement == 3}" class="badge bg-info">3e</span>
-                        <span th:if="${r.classement > 3}" th:text="${r.classement}"></span>
-                    </td>
-                    <td th:text="${r.teamNom}"></td>
-                    <td th:text="${r.matchsJoues}"></td>
-                    <td th:text="${r.victoires}"></td>
-                    <td th:text="${r.nuls}"></td>
-                    <td th:text="${r.defaites}"></td>
-                    <td><strong th:text="${r.points}"></strong></td>
-                    <td th:text="${r.butsMarques}"></td>
-                    <td th:text="${r.butsEncaisses}"></td>
-                    <td>
-                        <span th:if="${r.diffButs > 0}" class="text-success" th:text="'+' + ${r.diffButs}"></span>
-                        <span th:if="${r.diffButs == 0}" th:text="${r.diffButs}"></span>
-                        <span th:if="${r.diffButs < 0}" class="text-danger" th:text="${r.diffButs}"></span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div th:unless="${rankings != null and !rankings.isEmpty()}" class="alert alert-info">
-        Aucun classement disponible. Des matchs doivent être joués.
+    <div th:if="${rankings == null or rankings.isEmpty()}" class="empty-state text-center mt-4">
+        <i class="bi bi-bar-chart-line"></i>
+        <h3>Aucun classement disponible</h3>
+        <p>Les résultats doivent encore être saisis pour calculer le classement.</p>
     </div>
 </div>
 </html>

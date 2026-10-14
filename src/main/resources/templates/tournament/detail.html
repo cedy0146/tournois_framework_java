@@ -1,61 +1,203 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: html}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: html}">
 <div th:fragment="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 th:text="${tournament.nom}">Tournoi</h2>
-        <div>
-            <a th:href="@{/tournaments/{id}/edit(id=${tournament.id})}" class="btn btn-warning"
-               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Modifier</a>
-            <a th:href="@{/tournaments/{id}/matches(id=${tournament.id})}" class="btn btn-info">Matchs</a>
-            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-secondary">Classement</a>
-            <form th:action="@{/tournaments/{id}/generate-matches(id=${tournament.id})}" method="post" class="d-inline"
-                  sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+    <section class="app-page-head reveal">
+        <h2 th:text="${tournament.nom}">Nom du tournoi</h2>
+        <div class="status-progression">
+            <span class="progression-step active" th:data-step="0">Brouillon</span>
+            <span class="progression-step" th:data-step="1">Inscriptions</span>
+            <span class="progression-step" th:data-step="2">Programmé</span>
+            <span class="progression-step" th:data-step="3">En cours</span>
+            <span class="progression-step" th:data-step="4">Terminé</span>
+        </div>
+        <div class="btn-group" style="justify-content: flex-end; width: 100%;">
+            <a th:href="@{/tournaments/{id}/edit(id=${tournament.id})}" class="btn btn-outline-secondary" sec:authorize="hasAnyRole('ADMIN','MANAGER')" data-modal-url data-modal-size="md">Modifier</a>
+            <a th:href="@{/tournaments/{id}/matches(id=${tournament.id})}" class="btn btn-primary">Matchs</a>
+            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-outline-primary">Classement</a>
+            <form th:action="@{/tournaments/{id}/generate-matches(id=${tournament.id})}" method="post" sec:authorize="hasAnyRole('ADMIN','MANAGER')" class="d-inline">
                 <button type="submit" class="btn btn-success">Générer les matchs</button>
             </form>
+            <a th:href="@{/tournaments/{id}/matches/bracket(id=${tournament.id})}" th:if="${tournament.type == 'ELIMINATION_DIRECTE'}" class="btn btn-outline-primary ml-2">Voir l'arbre</a>
         </div>
-    </div>
+    </section>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Informations</h5>
-                    <p><strong>Sport :</strong> <span th:text="${tournament.sport}"></span></p>
-                    <p><strong>Type :</strong> <span th:text="${tournament.type}"></span></p>
-                    <p><strong>Statut :</strong> <span class="badge bg-info" th:text="${tournament.statut}"></span></p>
-                    <p><strong>Lieu :</strong> <span th:text="${tournament.lieu} ?: 'Non défini'"></span></p>
-                    <p><strong>Période :</strong> du <span th:text="${tournament.dateDebut}"></span> au <span th:text="${tournament.dateFin}"></span></p>
-                    <p><strong>Équipes :</strong> <span th:text="${tournament.nombreEquipesInscrites}"></span> / <span th:text="${tournament.nombreMaxEquipes}"></span></p>
+    <div th:replace="~{:: detailBody}"></div>
+</div>
+
+<div th:fragment="detailBody">
+    <div class="tournament-detail-grid">
+        <!-- COLONNE GAUCHE : fiche du tournoi -->
+        <div class="detail-left">
+            <div class="data-card">
+                <div class="section-header mb-3">
+                    <div>
+                        <span class="section-kicker">Fiche du tournoi</span>
+                        <h3 class="mt-2">Informations</h3>
+                    </div>
+                </div>
+                <div class="info-grid info-stack">
+                    <div class="info-item">
+                        <span>Sport</span>
+                        <strong th:text="${tournament.sport}">Sport</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Type</span>
+                        <strong th:text="${tournament.typeDisplay}">Type</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Statut</span>
+                        <span class="status-badge"
+                              th:classappend="${tournament.statut == 'INSCRIPTION' or tournament.statut == 'EN_COURS'} ? 'success'
+                              : (${tournament.statut == 'BROUILLON' or tournament.statut == 'PROGRAMME'} ? 'info' : 'secondary')"
+                              th:text="${tournament.statusDisplay}">Statut</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Lieu</span>
+                        <strong th:text="${tournament.lieu != null ? tournament.lieu : 'Non défini'}">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Début</span>
+                        <strong th:text="${#temporals.format(tournament.dateDebut, 'dd/MM/yyyy')}">jj/MM/aaaa</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Fin</span>
+                        <strong th:text="${#temporals.format(tournament.dateFin, 'dd/MM/yyyy')}">jj/MM/aaaa</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Participants</span>
+                        <strong th:text="|${tournament.nombreEquipesInscrites}/${tournament.nombreMaxEquipes}|">0/0</strong>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Description</h5>
-                    <p th:text="${tournament.description} ?: 'Aucune description'"></p>
+
+        <!-- COLONNE DROITE -->
+        <div class="detail-right">
+            <!-- Carte : Équipes inscrites -->
+            <div class="data-card">
+                <div class="section-header mb-3">
+                    <div>
+                        <span class="section-kicker">Équipes inscrites</span>
+                    </div>
+                </div>
+
+                <div th:if="${tournament.nombreEquipesInscrites >= tournament.nombreMaxEquipes and tournament.statut != 'EN_COURS' and tournament.statut != 'TERMINE'}"
+                     class="alert alert-danger mb-3" style="border-radius: 14px; background: var(--card-alt);">
+                    <span th:text="|Tournoi complet (${tournament.nombreEquipesInscrites}/${tournament.nombreMaxEquipes})|" class="fw-bold">Tournoi complet</span>
+                </div>
+                <div th:if="${tournament.nombreEquipesInscrites < tournament.nombreMaxEquipes or tournament.statut == 'EN_COURS' or tournament.statut == 'TERMINE'}"
+                     class="mb-3 small text-muted fw-semibold">
+                    <span th:text="|${tournament.nombreEquipesInscrites}/${tournament.nombreMaxEquipes} équipes inscrites|">0/0 équipes inscrites</span>
+                </div>
+
+                <div class="progress-track mb-3" role="progressbar"
+                     th:attr="aria-valuenow=${tournament.nombreEquipesInscrites},aria-valuemin=0,aria-valuemax=${tournament.nombreMaxEquipes}">
+                    <div class="progress-fill" th:style="'width: ' + ${tournament.nombreEquipesInscrites * 100.0 / tournament.nombreMaxEquipes} + '%'"></div>
+                </div>
+
+                <div th:if="${!#lists.isEmpty(tournament.registeredTeams)}" class="team-list">
+                    <div th:each="tIns : ${tournament.registeredTeams}" class="team-list-item">
+                        <div class="team-list-main">
+                            <span class="fw-bold" th:text="${tIns.nom}">Équipe</span>
+                            <small class="team-list-city" th:text="${tIns.ville}">Ville</small>
+                        </div>
+                        <span class="match-badge"
+                              th:classappend="${tIns.statut == 'INSCRIT'} ? 'success'
+                              : (${tIns.statut == 'EN_ATTENTE'} ? 'info' : 'secondary')"
+                              th:text="${tIns.statut == 'INSCRIT'} ? 'Inscrit'
+                              : (${tIns.statut == 'EN_ATTENTE'} ? 'En attente' : ${tIns.statut})">Inscrit</span>
+                        <form th:if="${tournament.statut == 'BROUILLON' or tournament.statut == 'INSCRIPTION'}"
+                              th:action="@{/tournaments/{id}/remove-team(id=${tournament.id}, teamId=${tIns.id})}" method="post">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Retirer</button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Formulaire d'inscription d'équipe -->
-    <div class="card mb-3" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
-        <div class="card-body">
-            <h5 class="card-title">Inscrire une équipe</h5>
-            <form th:action="@{/tournaments/{id}/register-team(id=${tournament.id})}" method="post" class="row g-3">
-                <div class="col-auto">
-                    <select name="teamId" class="form-select" required>
-                        <option value="">-- Choisir une équipe --</option>
-                    </select>
+            <!-- Carte : Actions -->
+            <div class="data-card" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                 th:if="${tournament.statut == 'BROUILLON' or tournament.statut == 'INSCRIPTION' or tournament.statut == 'PROGRAMME' or tournament.statut == 'EN_COURS' or tournament.statut == 'TERMINE'}">
+                <div class="section-header mb-3">
+                    <div>
+                        <span class="section-kicker">Actions</span>
+                    </div>
                 </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary">Inscrire</button>
+
+                <div class="detail-actions">
+                    <form th:if="${tournament.statut == 'BROUILLON'}"
+                          th:action="@{/tournaments/{id}/open-registration(id=${tournament.id})}" method="post">
+                        <button type="submit" class="btn btn-primary w-100">Ouvrir les inscriptions</button>
+                    </form>
+
+                    <div th:if="${(tournament.statut == 'BROUILLON' or tournament.statut == 'INSCRIPTION')
+                                  and tournament.nombreEquipesInscrites < tournament.nombreMaxEquipes}">
+                        <form th:if="${!#lists.isEmpty(availableTeams)}"
+                              th:action="@{/tournaments/{id}/register-team(id=${tournament.id})}" method="post"
+                              class="register-form">
+                            <label class="form-label small mb-0">Équipe</label>
+                            <select name="teamId" class="form-select" required>
+                                <option value="">-- Sélectionner une équipe --</option>
+                                <option th:each="t : ${availableTeams}" th:value="${t.id}" th:text="${t.nom}">Équipe</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Inscrire l'équipe</button>
+                        </form>
+                        <div th:if="${#lists.isEmpty(availableTeams)}"
+                             class="alert alert-warning mb-0" style="border-radius: 14px; background: var(--card-alt);">
+                            <span>Aucune équipe disponible. <a th:href="@{/teams}" class="alert-link">Voir les équipes</a></span>
+                        </div>
+                    </div>
+
+                    <form th:if="${tournament.statut == 'INSCRIPTION' and tournament.nombreEquipesInscrites >= 2}"
+                          th:action="@{/tournaments/{id}/generate-matches(id=${tournament.id})}" method="post">
+                        <button type="submit" class="btn btn-success w-100">Générer le calendrier</button>
+                    </form>
+
+                    <div th:if="${tournament.statut == 'PROGRAMME'}" class="detail-actions-row">
+                        <form th:action="@{/tournaments/{id}/start(id=${tournament.id})}" method="post">
+                            <button type="submit" class="btn btn-primary">Démarrer</button>
+                        </form>
+                        <form th:action="@{/tournaments/{id}/cancel(id=${tournament.id})}" method="post">
+                            <button type="submit" class="btn btn-outline-danger">Annuler</button>
+                        </form>
+                    </div>
+
+                    <form th:if="${tournament.statut == 'EN_COURS' or tournament.statut == 'TERMINE'}"
+                          th:action="@{/tournaments/{id}/cancel(id=${tournament.id})}" method="post">
+                        <button type="submit" class="btn btn-outline-danger w-100">Annuler</button>
+                    </form>
                 </div>
-            </form>
+            </div>
+
+            <!-- Carte : Description -->
+            <div th:if="${tournament.description != null and !#strings.isEmpty(tournament.description)}"
+                 class="data-card">
+                <div class="section-header mb-3">
+                    <div>
+                        <span class="section-kicker">Présentation</span>
+                        <h3 class="mt-2">Description</h3>
+                    </div>
+                </div>
+                <p th:text="${tournament.description}" class="mb-0"></p>
+            </div>
         </div>
     </div>
 </div>
-</html>
+
+<div th:fragment="modalContent" class="modal-fragment">
+    <div class="modal-header">
+        <h2 class="modal-title fs-5" id="appModalTitle" th:text="${tournament.nom}">Tournoi</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+    </div>
+    <div class="modal-body">
+        <div class="modal-detail-actions">
+            <a th:href="@{/tournaments/{id}/edit(id=${tournament.id})}" class="btn btn-outline-secondary btn-sm" sec:authorize="hasAnyRole('ADMIN','MANAGER')" data-modal-url data-modal-size="md">Modifier</a>
+            <a th:href="@{/tournaments/{id}/matches(id=${tournament.id})}" class="btn btn-primary btn-sm">Matchs</a>
+            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-outline-primary btn-sm">Classement</a>
+            <a th:href="@{/tournaments/{id}/matches/bracket(id=${tournament.id})}" th:if="${tournament.type == 'ELIMINATION_DIRECTE'}" class="btn btn-outline-primary btn-sm">Voir l'arbre</a>
+        </div>
+        <div th:replace="~{:: detailBody}"></div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+    </div>
+</div>

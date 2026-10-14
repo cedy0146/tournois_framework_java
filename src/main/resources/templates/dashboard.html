@@ -1,57 +1,186 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: html}">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: html}">
 <div th:fragment="content">
-    <h2 class="mb-4">Tableau de bord</h2>
-    <div class="row mb-3">
-        <div class="col">
-            <a th:href="@{/tournaments/new}" class="btn btn-primary"
-               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Nouveau Tournoi</a>
-            <a th:href="@{/teams/new}" class="btn btn-success"
-               sec:authorize="hasAnyRole('ADMIN','MANAGER')">Nouvelle Équipe</a>
+    <section class="app-page-head app-page-head--hero reveal">
+        <div th:replace="~{fragments/hero-slides :: slides}"></div>
+        <div class="app-page-head-inner">
+            <span class="eyebrow">Vue d’ensemble</span>
+            <h1>Bonjour, <em class="lp-accent lp-accent--plain" sec:authentication="name">admin</em>.</h1>
+            <p>Pilotez vos compétitions, vos équipes et vos résultats depuis un seul espace.</p>
+            <div class="btn-group">
+                <a th:href="@{/tournaments/new}" class="btn btn-primary" sec:authorize="hasAnyRole('ADMIN','MANAGER')"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Nouveau tournoi</a>
+                <a th:href="@{/teams/new}" class="btn btn-light" sec:authorize="hasAnyRole('ADMIN','MANAGER')"><i class="fa-solid fa-people-group me-2" aria-hidden="true"></i>Nouvelle équipe</a>
+                <a th:href="@{/tournaments}" class="btn btn-outline-light"><i class="fa-solid fa-calendar-days me-2" aria-hidden="true"></i>Voir les tournois</a>
+            </div>
         </div>
-    </div>
+        <div class="hero-visual" th:with="next=${nextTournament}">
+            <a class="mini-scoreboard" th:if="${next != null}" th:href="@{/tournaments/{id}(id=${next.id})}">
+                <span class="label">Prochain tournoi</span>
+                <strong th:text="${next.nom}">Nom</strong>
+                <small th:text="${#strings.substring(next.dateDebut.toString(), 8, 10) + '/' + #strings.substring(next.dateDebut.toString(), 5, 7) + '/' + #strings.substring(next.dateDebut.toString(), 0, 4)}">dd/MM/yyyy</small>
+            </a>
+            <div class="mini-scoreboard" th:if="${next == null}">
+                <span class="label">Prochain tournoi</span>
+                <strong>Aucun</strong>
+                <small>—</small>
+            </div>
+        </div>
+    </section>
 
-    <h4>Tournois actifs</h4>
-    <div class="table-responsive" th:if="${tournaments != null and !tournaments.isEmpty()}">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nom</th>
-                    <th>Sport</th>
-                    <th>Type</th>
-                    <th>Début</th>
-                    <th>Fin</th>
-                    <th>Statut</th>
-                    <th>Équipes</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="t : ${tournaments}">
-                    <td th:text="${t.nom}"></td>
-                    <td th:text="${t.sport}"></td>
-                    <td th:text="${t.type}"></td>
-                    <td th:text="${t.dateDebut}"></td>
-                    <td th:text="${t.dateFin}"></td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${t.statut == 'EN_COURS'} ? 'bg-success' : (${t.statut == 'INSCRIPTION'} ? 'bg-info' : (${t.statut == 'PROGRAMME'} ? 'bg-warning' : 'bg-secondary'))"
-                              th:text="${t.statut}"></span>
-                    </td>
-                    <td th:text="${t.nombreEquipesInscrites}"></td>
-                    <td>
-                        <a th:href="@{/tournaments/{id}(id=${t.id})}" class="btn btn-sm btn-outline-primary">Voir</a>
-                        <a th:href="@{/tournaments/{id}/matches(id=${t.id})}" class="btn btn-sm btn-outline-secondary">Matchs</a>
-                        <a th:href="@{/tournaments/{id}/ranking(id=${t.id})}" class="btn btn-sm btn-outline-info">Classement</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div th:unless="${tournaments != null and !tournaments.isEmpty()}" class="alert alert-info">
-        Aucun tournoi actif. <a th:href="@{/tournaments/new}">Créer un tournoi</a>
-    </div>
+    <section class="stats-grid" aria-label="Indicateurs clés">
+        <article class="stat-card accent reveal">
+            <div class="icon-wrap" aria-hidden="true"><i class="fa-solid fa-trophy"></i></div>
+            <div>
+                <small>Tournois actifs</small>
+                <strong th:text="${#lists.size(tournaments.?[statut == 'INSCRIPTION' or statut == 'PROGRAMME' or statut == 'EN_COURS'])}">0</strong>
+                <span class="stat-trend positive"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i> Saison en cours</span>
+            </div>
+        </article>
+        <article class="stat-card reveal">
+            <div class="icon-wrap" aria-hidden="true"><i class="fa-solid fa-people-group"></i></div>
+            <div>
+                <small>Équipes engagées</small>
+                <strong th:text="${tournaments != null and !tournaments.isEmpty() ? #aggregates.sum(tournaments.![nombreEquipesInscrites]) : 0}">0</strong>
+                <span class="stat-trend">Sur tous les tournois</span>
+            </div>
+        </article>
+        <article class="stat-card reveal">
+            <div class="icon-wrap" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></div>
+            <div>
+                <small>Tournois avec équipes</small>
+                <strong th:text="${#lists.size(tournaments.?[nombreEquipesInscrites > 0])}">0</strong>
+                <span class="stat-trend">Inscrits</span>
+            </div>
+        </article>
+        <article class="stat-card reveal">
+            <div class="icon-wrap" aria-hidden="true"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div>
+                <small>À venir</small>
+                <strong th:text="${#lists.size(tournaments.?[statut == 'PROGRAMME' or statut == 'INSCRIPTION'])}">0</strong>
+                <span class="stat-trend">Prochainement</span>
+            </div>
+        </article>
+        <article class="stat-card reveal">
+            <div class="icon-wrap" aria-hidden="true"><i class="fa-solid fa-futbol"></i></div>
+            <div>
+                <small>Matchs terminés</small>
+                <strong th:text="${stats != null ? stats.matchsTermines : 0}">0</strong>
+                <span class="stat-trend">Résultats enregistrés</span>
+            </div>
+        </article>
+        <article class="stat-card reveal">
+            <div class="icon-wrap" aria-hidden="true"><i class="fa-solid fa-calendar-check"></i></div>
+            <div>
+                <small>Matchs programmés</small>
+                <strong th:text="${stats != null ? stats.matchsProgrammes : 0}">0</strong>
+                <span class="stat-trend" th:text="${stats != null ? stats.matchsAJour : 0} + ' à venir'">0 à venir</span>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid">
+        <article class="chart-card reveal">
+            <div class="section-header">
+                <div><span class="section-kicker">Répartition</span><h2>Statut des <em class="lp-accent lp-accent--plain">tournois</em></h2></div>
+                <span class="status-badge info">Actualisé</span>
+            </div>
+            <div class="chart-wrap"><canvas id="statusChart" role="img" aria-label="Répartition des tournois par statut"></canvas></div>
+        </article>
+        <article class="chart-card reveal">
+            <div class="section-header">
+                <div><span class="section-kicker">Engagement</span><h2>Équipes <em class="lp-accent lp-accent--plain">inscrites</em></h2></div>
+            </div>
+            <div class="chart-wrap"><canvas id="teamsChart" role="img" aria-label="Équipes inscrites par tournoi"></canvas></div>
+        </article>
+    </section>
+
+    <section class="content-section reveal">
+        <div class="section-header">
+            <div><span class="section-kicker">Planning</span><h2>Prochains tournois</h2></div>
+            <a th:href="@{/tournaments}" class="btn btn-outline-primary btn-sm">Tout afficher <i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a>
+        </div>
+        <div class="timeline-list" th:if="${tournaments != null and !tournaments.isEmpty()}">
+            <div class="timeline-item" th:each="t : ${tournaments}" th:attr="data-tournament-name=${t.nom},data-tournament-teams=${t.nombreEquipesInscrites}">
+                <div class="timeline-date"><strong th:text="${#strings.substring(t.dateDebut.toString(), 8, 10)}">01</strong><small th:text="${#strings.substring(t.dateDebut.toString(), 5, 7)}">OCT</small></div>
+                <div class="flex-grow-1">
+                    <strong th:text="${t.nom}">Tournoi</strong>
+                    <span><i class="fa-solid fa-location-dot me-1" aria-hidden="true"></i><span th:text="${t.lieu != null ? t.lieu : 'Lieu à définir'}">Lieu</span> · <span th:text="${t.nombreEquipesInscrites} + '/' + ${t.nombreMaxEquipes}">0/0</span> équipes</span>
+                </div>
+                <span class="status-badge"
+                      th:classappend="${t.statut == 'EN_COURS'} ? 'success' : (${t.statut == 'INSCRIPTION'} ? 'info' : (${t.statut == 'PROGRAMME'} ? 'warning' : 'secondary'))"
+                      th:text="${t.statut}">STATUT</span>
+            </div>
+        </div>
+        <div th:unless="${tournaments != null and !tournaments.isEmpty()}" class="empty-state">
+            <i class="fa-regular fa-calendar-xmark" aria-hidden="true"></i>
+            <h3>Aucun tournoi actif</h3>
+            <p>Créez votre première compétition pour démarrer la saison.</p>
+        </div>
+    </section>
+
+    <div id="dashboardData" hidden
+         th:attr="data-brouillon=${#lists.size(tournaments.?[statut == 'BROUILLON'])},data-inscription=${#lists.size(tournaments.?[statut == 'INSCRIPTION'])},data-programme=${#lists.size(tournaments.?[statut == 'PROGRAMME'])},data-en-cours=${#lists.size(tournaments.?[statut == 'EN_COURS'])},data-termine=${#lists.size(tournaments.?[statut == 'TERMINE'])}"></div>
+    <script>
+        const dataNode = document.getElementById('dashboardData');
+        const tournamentNodes = [...document.querySelectorAll('[data-tournament-name]')];
+        const tournamentNames = tournamentNodes.map(node => node.dataset.tournamentName);
+        const tournamentTeams = tournamentNodes.map(node => Number(node.dataset.tournamentTeams));
+        const statusValues = ['brouillon', 'inscription', 'programme', 'enCours', 'termine'].map(key => Number(dataNode?.dataset[key] || 0));
+        const chartColors = ['#64748b', '#38bdf8', '#6366f1', '#22c55e', '#a78bfa'];
+        const chartText = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#eef2f8';
+        const chartGrid = getComputedStyle(document.documentElement).getPropertyValue('--line').trim() || 'rgba(148,163,184,.2)';
+        if (window.Chart) {
+            Chart.defaults.font.family = "'Plus Jakarta Sans', 'Source Sans 3', sans-serif";
+            Chart.defaults.font.size = 12;
+            Chart.defaults.color = chartText;
+            const barCanvas = document.getElementById('teamsChart');
+            const barGradient = barCanvas.getContext('2d').createLinearGradient(0, 0, 0, 220);
+            barGradient.addColorStop(0, '#f472b6');
+            barGradient.addColorStop(1, '#9d1d68');
+            new Chart(document.getElementById('statusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Brouillon', 'Inscription', 'Programmé', 'En cours', 'Terminé'],
+                    datasets: [{ data: statusValues, backgroundColor: chartColors, borderWidth: 0, hoverOffset: 10 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: chartText, usePointStyle: true, padding: 16 } },
+                        tooltip: { backgroundColor: '#0d1320', titleColor: '#f9a8d4', bodyColor: '#eef2f8', borderColor: 'rgba(148,163,184,.25)', borderWidth: 1, padding: 10, cornerRadius: 8 }
+                    }
+                }
+            });
+            new Chart(barCanvas, {
+                type: 'bar',
+                data: {
+                    labels: tournamentNames,
+                    datasets: [{ label: 'Équipes inscrites', data: tournamentTeams, borderRadius: 8, backgroundColor: barGradient, hoverBackgroundColor: '#f9a8d4', maxBarThickness: 34 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: chartText }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { color: chartText, precision: 0 }, grid: { color: chartGrid } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#0d1320', titleColor: '#f9a8d4', bodyColor: '#eef2f8', borderColor: 'rgba(148,163,184,.25)', borderWidth: 1, padding: 10, cornerRadius: 8 }
+                    }
+                }
+            });
+        } else {
+            const statusLabels = ['Brouillon', 'Inscription', 'Programmé', 'En cours', 'Terminé'];
+            const total = statusValues.reduce((sum, value) => sum + value, 0);
+            const statusMarkup = statusLabels.map((label, index) => `<span><i style="background:${chartColors[index]}"></i>${label} <b>${statusValues[index]}</b></span>`).join('');
+            document.getElementById('statusChart').parentElement.innerHTML = `<div class="chart-fallback"><div class="fallback-ring" style="background:conic-gradient(${chartColors.map((color, index) => `${color} ${(statusValues.slice(0, index).reduce((a, b) => a + b, 0) / Math.max(total, 1)) * 360}deg ${(statusValues.slice(0, index + 1).reduce((a, b) => a + b, 0) / Math.max(total, 1)) * 360}deg`).join(',')})"><strong>${total}</strong><small>total</small></div><div class="fallback-legend">${statusMarkup}</div></div>`;
+            const maxTeams = Math.max(...tournamentTeams, 1);
+            const bars = tournamentNames.map((name, index) => `<div class="fallback-bar-row"><span>${name}</span><div><i style="width:${(tournamentTeams[index] / maxTeams) * 100}%"></i></div><b>${tournamentTeams[index]}</b></div>`).join('');
+            document.getElementById('teamsChart').parentElement.innerHTML = `<div class="chart-fallback fallback-bars">${bars || '<span class="text-muted">Aucune équipe inscrite</span>'}</div>`;
+        }
+    </script>
 </div>
 </html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <section class="app-page-head reveal">
+        <span class="eyebrow">Arbre</span>
+        <h1>Arbre <em class="lp-accent lp-accent--plain">du tournoi</em></h1>
+        <p>Suivez la phase à élimination directe.</p>
+        <div class="btn-group">
+            <a th:href="@{/tournaments/{id}/matches(id=${tournament.id})}" class="btn btn-outline-secondary">Matchs</a>
+            <a th:href="@{/tournaments/{id}/ranking(id=${tournament.id})}" class="btn btn-outline-secondary">Classement</a>
+        </div>
+    </section>
+
+    <div class="bracket-container" th:if="${byTour != null}">
+        <div th:each="tour : ${#maps.keySet(byTour)}" class="bracket-tour">
+            <h3 th:text="'Tour ' + ${tour}">Tour X</h3>
+            <div class="match-grid">
+                <div th:each="m : ${byTour.get(tour)}" class="match-card">
+                    <div class="match-teams">
+                        <span th:text="${m.equipeDomicileNom} ?: 'TBD'">Dom</span>
+                        <span class="text-muted">VS</span>
+                        <span th:text="${m.equipeVisiteurNom} ?: 'TBD'">Vis</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div th:if="${message}" class="alert alert-info">
+        <span th:text="${message}">Message</span>
+    </div>
+</div>
+</html>

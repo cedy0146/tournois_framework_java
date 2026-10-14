@@ -1,56 +1,210 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle != null ? pageTitle + ' - Tournoi' : 'Gestion Tournois Sportifs'}">Tournoi</title>
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="Plateforme de gestion sportive et de tournois">
+    <meta name="authenticated" th:content="${#authorization.expression('isAuthenticated()')}">
+    <title th:text="${pageTitle != null ? pageTitle + ' - Mahery Foot' : 'Mahery Foot - Gestion de tournois sportifs'}">Mahery Foot - Gestion de tournois sportifs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('tournoi-theme');
+            document.documentElement.dataset.theme = savedTheme || 'dark';
+        })();
+    </script>
     <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" th:href="@{/}">Tournoi</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" th:href="@{/}">Accueil</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/tournaments}">Tournois</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/teams}">Équipes</a></li>
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <span class="nav-link text-light" sec:authentication="name">User</span>
-                </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <form th:action="@{/logout}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-outline-light btn-sm nav-link">Déconnexion</button>
-                    </form>
-                </li>
-                <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a class="nav-link" th:href="@{/login}">Connexion</a>
-                </li>
-            </ul>
+<a class="skip-link" href="#main-content">Aller au contenu principal</a>
+
+<div class="app-shell" id="appShell">
+    <!-- SIDEBAR FLOTTANTE -->
+    <aside class="app-sidebar" id="appSidebar">
+        <!-- Profil Header -->
+        <div class="sidebar-profile" sec:authorize="isAuthenticated()">
+            <div class="sidebar-avatar" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</div>
+            <div class="sidebar-user-info">
+                <span class="sidebar-user-role" sec:authentication="principal.authorities[0]">ADMIN</span>
+                <strong class="sidebar-user-name" sec:authentication="name">User</strong>
+            </div>
+            <button class="sidebar-toggle-btn" id="sidebarToggle" type="button" aria-label="Réduire ou agrandir le menu">
+                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+            </button>
         </div>
+
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav" aria-label="Menu principal">
+            <div class="sidebar-section-title">MENU</div>
+
+            <!-- Tableau de bord -->
+            <a th:href="@{/dashboard}" class="sidebar-link"
+               th:classappend="${currentUri == '/dashboard'} ? 'is-active'"
+               th:attr="aria-current=${currentUri == '/dashboard'} ? 'page' : null"
+               data-label="Tableau de bord">
+                <i class="bi bi-grid-1x2" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Tableau de bord</span>
+            </a>
+
+            <!-- Tournois Parent -->
+            <div class="sidebar-parent-group" id="tournamentsGroup"
+                 th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/tournaments')} ? 'is-open'">
+                <button type="button" class="sidebar-link sidebar-parent-btn"
+                        th:attr="aria-expanded=${currentUri != null and #strings.startsWith(currentUri, '/tournaments')} ? 'true' : 'false'"
+                        data-label="Tournois">
+                    <i class="bi bi-trophy" aria-hidden="true"></i>
+                    <span class="sidebar-link-text">Tournois</span>
+                    <i class="bi bi-chevron-down sidebar-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="sidebar-sublinks">
+                    <a th:href="@{/tournaments}" class="sidebar-sublink"
+                       th:classappend="${currentUri == '/tournaments'} ? 'is-active'"
+                       th:attr="aria-current=${currentUri == '/tournaments'} ? 'page' : null">
+                        Tous les tournois
+                    </a>
+                    <a th:href="@{/tournaments/new}" class="sidebar-sublink"
+                       sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                       data-modal-url data-modal-size="md">
+                        Nouveau tournoi
+                    </a>
+                </div>
+                <!-- Flyout for collapsed mode -->
+                <div class="sidebar-flyout">
+                    <div class="sidebar-flyout-title">Tournois</div>
+                    <a th:href="@{/tournaments}" class="sidebar-sublink">Tous les tournois</a>
+                    <a th:href="@{/tournaments/new}" class="sidebar-sublink"
+                       sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+                       data-modal-url data-modal-size="md">Nouveau tournoi</a>
+                </div>
+            </div>
+
+            <!-- Équipes -->
+            <a th:href="@{/teams}" class="sidebar-link"
+               th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/teams')} ? 'is-active'"
+               th:attr="aria-current=${currentUri != null and #strings.startsWith(currentUri, '/teams')} ? 'page' : null"
+               data-label="Équipes">
+                <i class="bi bi-people" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Équipes</span>
+            </a>
+
+            <!-- Matchs -->
+            <a th:href="@{/matches}" class="sidebar-link"
+               th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/matches')} ? 'is-active'"
+               th:attr="aria-current=${currentUri != null and #strings.startsWith(currentUri, '/matches')} ? 'page' : null"
+               data-label="Matchs">
+                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Matchs</span>
+            </a>
+
+            <!-- Classement -->
+            <a th:href="@{/rankings}" class="sidebar-link"
+               th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/rankings')} ? 'is-active'"
+               th:attr="aria-current=${currentUri != null and #strings.startsWith(currentUri, '/rankings')} ? 'page' : null"
+               data-label="Classement">
+                <i class="bi bi-bar-chart" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Classement</span>
+            </a>
+
+            <!-- CTA Card -->
+            <div class="sidebar-cta" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                <div class="sidebar-cta-content">
+                    <h4>On joue ?</h4>
+                    <p>Créez un nouveau tournoi et invitez vos équipes.</p>
+                    <a th:href="@{/tournaments/new}" class="btn btn-primary w-100" data-modal-url data-modal-size="md">+ Nouveau tournoi</a>
+                </div>
+                <a th:href="@{/tournaments/new}" class="sidebar-cta-mini-btn" data-modal-url data-modal-size="md" aria-label="Nouveau tournoi">
+                    <i class="bi bi-plus" aria-hidden="true"></i>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Footer Sidebar -->
+        <div class="sidebar-footer">
+            <button class="sidebar-footer-btn" type="button" data-theme-toggle aria-label="Basculer le thème" data-label="Thème">
+                <i class="fa-solid fa-moon" data-theme-icon aria-hidden="true"></i>
+                <span class="sidebar-link-text">Thème</span>
+            </button>
+            <form th:action="@{/logout}" method="post" class="d-inline w-100" sec:authorize="isAuthenticated()">
+                <button type="submit" class="sidebar-footer-btn text-danger" aria-label="Déconnexion" data-label="Déconnexion">
+                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                    <span class="sidebar-link-text">Déconnexion</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- MAIN VIEW WRAPPER -->
+    <div class="app-main-wrapper">
+        <!-- Mobile Topbar -->
+        <header class="mobile-topbar d-lg-none">
+            <button type="button" class="mobile-burger-btn" id="mobileBurger" aria-label="Ouvrir le menu">
+                <i class="bi bi-list" aria-hidden="true"></i>
+            </button>
+            <span class="mobile-brand-title">Mahery Foot</span>
+        </header>
+
+        <main id="main-content" class="app-main">
+            <div th:if="${success}" class="alert custom-alert success" role="status">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+            </div>
+            <div th:if="${error}" class="alert custom-alert danger" role="alert">
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+            </div>
+            <div th:replace="~{:: content}"></div>
+        </main>
+
+        <footer class="site-footer">
+            <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="brand-mark" aria-hidden="true"><i class="bi bi-trophy"></i></span>
+                    <div>
+                        <strong>Mahery Foot</strong>
+                        <div class="mb-0">Gestion de tournois sportifs</div>
+                    </div>
+                </div>
+                <ul class="footer-links">
+                    <li><a th:href="@{/tournaments}">Tournois</a></li>
+                    <li><a th:href="@{/teams}">Équipes</a></li>
+                </ul>
+                <p class="mb-0">&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> Mahery Foot — Tous droits réservés</p>
+            </div>
+        </footer>
     </div>
-</nav>
-<div class="container mt-4">
-    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <span th:text="${success}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <span th:text="${error}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <div th:replace="~{:: content}"></div>
 </div>
-<footer class="bg-dark text-light text-center py-3 mt-5">
-    <p class="mb-0">&copy; 2026 - Gestion de Tournois Sportifs</p>
-</footer>
+
+<div class="app-sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="appToastContainer">
+    <div id="appToast" class="toast" role="status" aria-live="polite" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-check-circle-fill text-success me-2" aria-hidden="true"></i>
+            <strong class="me-auto" id="appToastTitle">Succès</strong>
+            <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Fermer"></button>
+        </div>
+        <div class="toast-body" id="appToastBody"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="appModal" tabindex="-1" aria-hidden="true" aria-labelledby="appModalTitle">
+    <div class="modal-dialog modal-lg modal-fullscreen-sm-down modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" id="appModalContent"></div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/login-modal :: modal}"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
 </body>
 </html>

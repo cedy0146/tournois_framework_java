@@ -14,10 +14,15 @@ public interface RankingRepository extends JpaRepository<Ranking, Long> {
 
     List<Ranking> findByTournamentIdOrderByClassementAsc(Long tournamentId);
 
+    @Query("SELECT r FROM Ranking r JOIN FETCH r.tournament JOIN FETCH r.team ORDER BY r.tournament.id ASC, r.classement ASC")
+    List<Ranking> findAllWithTournamentAndTeam();
+
     Optional<Ranking> findByTournamentIdAndTeamId(Long tournamentId, Long teamId);
 
     @Query("SELECT r FROM Ranking r WHERE r.tournament.id = :tournamentId ORDER BY r.points DESC, (r.butsMarques - r.butsEncaisses) DESC, r.butsMarques DESC")
     List<Ranking> findSortedRankings(@Param("tournamentId") Long tournamentId);
 
     void deleteByTournamentId(Long tournamentId);
+
+    boolean existsByTeamId(Long teamId);
 }

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="Mahery Foot — planifiez vos tournois, gérez vos équipes et suivez vos résultats en temps réel">
+    <!-- État de connexion exploité par app.js (ouverture du modal sur boutons protégés) -->
+    <meta name="authenticated" th:content="${#authorization.expression('isAuthenticated()')}">
+    <title>Mahery Foot — Gestion de tournois de football</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('tournoi-theme');
+            document.documentElement.dataset.theme = savedTheme || 'dark';
+        })();
+    </script>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Aller au contenu principal</a>
+
+<div class="lp-page">
+
+    <!-- ============ EN-TÊTE ============ -->
+    <header class="lp-header">
+        <div class="lp-header__inner">
+            <a class="lp-brand" th:href="@{/}">
+                <span class="lp-brand__mark" aria-hidden="true"><i class="bi bi-trophy"></i></span>
+                <span>Mahery Foot</span>
+            </a>
+            <div class="lp-header__tools">
+                <button class="theme-toggle" type="button" data-theme-toggle aria-label="Activer le mode clair">
+                    <i class="fa-solid fa-moon" data-theme-icon aria-hidden="true"></i>
+                </button>
+                <span class="lp-header__user" sec:authorize="isAuthenticated()">
+                    <i class="bi bi-person-circle" aria-hidden="true"></i>
+                    <span sec:authentication="name">User</span>
+                </span>
+                <a class="lp-btn lp-btn--ghost lp-btn--sm" sec:authorize="isAuthenticated()" th:href="@{/dashboard}">
+                    <i class="bi bi-speedometer2" aria-hidden="true"></i> Tableau de bord
+                </a>
+                <form class="lp-header__logout" sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post">
+                    <button type="submit" class="lp-btn lp-btn--ghost lp-btn--sm">Déconnexion</button>
+                </form>
+                <button type="button" class="lp-btn lp-btn--primary lp-btn--sm" sec:authorize="!isAuthenticated()"
+                        data-bs-toggle="modal" data-bs-target="#loginModal">Se connecter
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="lp-main">
+
+        <!-- ============ HERO ============ -->
+        <section class="lp-hero container">
+            <div class="lp-hero__copy lp-reveal">
+                <span class="lp-eyebrow"><i aria-hidden="true"></i>Gestion de tournois</span>
+                <h1 class="lp-hero__title">
+                    Vos tournois,<br>
+                    sous contrôle, du<br>
+                    coup d’envoi
+                </h1>
+                <p class="lp-hero__lead">
+                    Créez vos compétitions, gérez vos équipes et suivez chaque rencontre en temps réel.
+                </p>
+                <div class="lp-hero__actions">
+                    <button type="button" class="lp-btn lp-btn--primary" sec:authorize="!isAuthenticated()"
+                            data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Ouvrir le tableau de bord
+                    </button>
+                    <a class="lp-btn lp-btn--primary" sec:authorize="isAuthenticated()" th:href="@{/dashboard}">
+                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Ouvrir le tableau de bord
+                    </a>
+                    <a class="lp-link" href="#fonctionnalites">Découvrir les fonctionnalités ↓</a>
+                </div>
+                <div class="lp-players">
+                    <div class="lp-avatars">
+                        <img th:src="@{/img/im4.jpg}" alt="Joueur">
+                        <img th:src="@{/img/img2.jpg}" alt="Joueur">
+                        <img th:src="@{/img/foot.jpeg}" alt="Joueur">
+                        <img th:src="@{/img/login-trophy.jpg}" alt="Joueur">
+                    </div>
+                    <p class="lp-players__text"><span class="lp-players__dot" aria-hidden="true"></span><strong>400+</strong> joueurs en ligne</p>
+                </div>
+            </div>
+
+            <div class="lp-hero__visual lp-reveal">
+                <div class="lp-visual">
+                    <div class="lp-glow" aria-hidden="true"></div>
+                    <div class="lp-capsule">
+  <img class="lp-capsule-img" th:src="@{/img/mahery-foot-banner.png}" alt="Mahery Foot — ballon de football">
+  <div class="lp-capsule__caption">
+    <strong>Football de tout le temps</strong>
+    <span>Suivez chaque match, chaque score et chaque classement.</span>
+  </div>
+</div>
+                    <div class="lp-ring" aria-hidden="true"></div>
+                    <div class="lp-sparkles" aria-hidden="true">
+                        <svg class="lp-sparkle lp-sparkle--lg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0 Q13.5 10.5 24 12 Q13.5 13.5 12 24 Q10.5 13.5 0 12 Q10.5 10.5 12 0 Z"/>
+                        </svg>
+                        <svg class="lp-sparkle lp-sparkle--sm" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0 Q13.5 10.5 24 12 Q13.5 13.5 12 24 Q10.5 13.5 0 12 Q10.5 10.5 12 0 Z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ FONCTIONNALITÉS ============ -->
+        <section id="fonctionnalites" class="lp-section container lp-reveal">
+            <div class="lp-section__head">
+                <span class="lp-kicker">Tout au même endroit</span>
+                <h2>Des outils <em class="lp-accent lp-accent--plain">taillés</em> pour le terrain</h2>
+                <p>De l’inscription à la finale, chaque étape de votre compétition est prise en charge.</p>
+            </div>
+            <div class="lp-features">
+                <article class="lp-feature">
+                    <span class="lp-feature__icon" aria-hidden="true"><i class="bi bi-trophy"></i></span>
+                    <h3>Tournois</h3>
+                    <p>Créez et pilotez vos compétitions de bout en bout.</p>
+                </article>
+                <article class="lp-feature">
+                    <span class="lp-feature__icon" aria-hidden="true"><i class="bi bi-people"></i></span>
+                    <h3>Équipes</h3>
+                    <p>Inscrivez vos clubs et gérez vos effectifs en un clic.</p>
+                </article>
+                <article class="lp-feature">
+                    <span class="lp-feature__icon" aria-hidden="true"><i class="bi bi-person-badge"></i></span>
+                    <h3>Joueurs</h3>
+                    <p>Suivez les stats et les performances de chaque joueur.</p>
+                </article>
+                <article class="lp-feature">
+                    <span class="lp-feature__icon" aria-hidden="true"><i class="bi bi-controller"></i></span>
+                    <h3>Matchs</h3>
+                    <p>Planifiez les rencontres et saisissez les scores en direct.</p>
+                </article>
+                <article class="lp-feature">
+                    <span class="lp-feature__icon" aria-hidden="true"><i class="bi bi-bar-chart-line"></i></span>
+                    <h3>Classements</h3>
+                    <p>Générez automatiquement le classement de chaque phase.</p>
+                </article>
+                <article class="lp-feature">
+                    <span class="lp-feature__icon" aria-hidden="true"><i class="bi bi-bar-chart-line"></i></span>
+                    <h3>Résultats</h3>
+                    <p>Retrouvez tous les résultats et les archives de la saison.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- ============ GALERIE ============ -->
+        <section class="lp-section container lp-reveal">
+            <div class="lp-gallery">
+                <div class="lp-gallery__stack">
+                    <div class="lp-shot lp-shot--top">
+                        <img th:src="@{/img/img.jpg}" alt="Intérieur du stade">
+                    </div>
+                    <div class="lp-shot lp-shot--front">
+                        <img th:src="@{/img/mahery-foot-arena.png}" alt="Stade Mahery Foot vu du ciel">
+                    </div>
+                </div>
+                <div class="lp-gallery__copy">
+                    <span class="lp-kicker">Expérience</span>
+                    <h2>Une nouvelle <em class="lp-accent lp-accent--plain">expérience</em> de tournoi</h2>
+                    <p>
+                        Créez votre tournoi, invitez vos équipes et laissez Mahery Foot orchestrer chaque
+                        rencontre : calendriers, scores et classements toujours à jour, sans tableur ni
+                        message perdu.
+                    </p>
+                    <a class="lp-btn lp-btn--ghost" href="#fonctionnalites">Voir les fonctionnalités</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ TOURNOIS À LA UNE ============ -->
+        <section class="lp-section container lp-reveal">
+            <div class="lp-section__head">
+                <span class="lp-kicker">À la une</span>
+                <h2>Tournois à la <em class="lp-accent lp-accent--plain">une</em></h2>
+                <p>Les compétitions en cours et à venir de la communauté Mahery Foot.</p>
+            </div>
+            <div class="lp-show-grid" th:if="${tournaments != null and !tournaments.isEmpty()}">
+                <a class="lp-show" th:each="t, iter : ${tournaments}" th:if="${iter.count <= 4}"
+                   th:href="@{/tournaments/{id}(id=${t.id})}" data-login-required
+                   th:classappend="${iter.index % 3 == 0 ? 'lp-show--0' : (iter.index % 3 == 1 ? 'lp-show--1' : 'lp-show--2')}">
+                    <div class="lp-show__body">
+                        <span class="lp-show__badge" th:text="${t.statut}">STATUT</span>
+                        <h3 th:text="${t.nom}">Tournoi</h3>
+                        <p th:text="${t.description != null and !t.description.isEmpty() ? t.description : 'Une compétition à suivre de près sur Mahery Foot.'}">Description</p>
+                        <span class="lp-show__meta">
+                            <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                            <span th:if="${t.dateDebut != null}"
+                                  th:text="${#strings.substring(t.dateDebut.toString(), 8, 10) + '/' + #strings.substring(t.dateDebut.toString(), 5, 7) + '/' + #strings.substring(t.dateDebut.toString(), 0, 4)}">dd/MM/yyyy</span>
+                            <span th:unless="${t.dateDebut != null}">Date à définir</span>
+                            <span class="lp-show__sep" aria-hidden="true">·</span>
+                            <i class="bi bi-people" aria-hidden="true"></i>
+                            <span th:text="${t.nombreEquipesInscrites + '/' + t.nombreMaxEquipes}">0/0</span>
+                        </span>
+                    </div>
+                </a>
+            </div>
+            <p class="lp-empty" th:unless="${tournaments != null and !tournaments.isEmpty()}">
+                Aucun tournoi à la une pour le moment.
+            </p>
+        </section>
+
+        <!-- ============ NOS VALEURS ============ -->
+        <section class="lp-section container lp-reveal">
+            <div class="lp-values">
+                <div class="lp-values__copy">
+                    <span class="lp-kicker">Philosophie</span>
+                    <h2>Nos <em class="lp-accent lp-accent--plain">valeurs</em></h2>
+                    <p>
+                        Mahery Foot, c’est une communauté réunie autour du jeu, du respect et de la
+                        progression. Le score compte, la manière de jouer aussi.
+                    </p>
+                </div>
+                <ul class="lp-values__list">
+                    <li class="lp-values__item">
+                        <span class="lp-values__icon" aria-hidden="true"><i class="bi bi-hand-thumbs-up"></i></span>
+                        <div>
+                            <strong>Fair-play</strong>
+                            <small>Le respect des règles et des adversaires avant tout.</small>
+                        </div>
+                    </li>
+                    <li class="lp-values__item">
+                        <span class="lp-values__icon" aria-hidden="true"><i class="bi bi-people"></i></span>
+                        <div>
+                            <strong>Esprit d’équipe</strong>
+                            <small>On gagne ensemble, on progresse ensemble.</small>
+                        </div>
+                    </li>
+                    <li class="lp-values__item">
+                        <span class="lp-values__icon" aria-hidden="true"><i class="bi bi-heart"></i></span>
+                        <div>
+                            <strong>Passion</strong>
+                            <small>Le goût du jeu anime chaque rencontre.</small>
+                        </div>
+                    </li>
+                    <li class="lp-values__item">
+                        <span class="lp-values__icon" aria-hidden="true"><i class="bi bi-graph-up-arrow"></i></span>
+                        <div>
+                            <strong>Performance</strong>
+                            <small>Des outils précis pour des décisions justes.</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="lp-footer">
+        <div class="lp-footer__inner">
+            <a class="lp-brand" th:href="@{/}">
+                <span class="lp-brand__mark" aria-hidden="true"><i class="bi bi-trophy"></i></span>
+                <span>Mahery Foot</span>
+            </a>
+            <p class="lp-footer__copy">&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> Mahery Foot — Tous droits réservés</p>
+        </div>
+    </footer>
+
+</div>
+
+<!-- ============ MODAL DE CONNEXION (fragment partagé) ============ -->
+<div th:replace="~{fragments/login-modal :: modal}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

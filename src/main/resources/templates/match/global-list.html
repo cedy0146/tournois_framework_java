@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <section class="app-page-head reveal">
+        <span class="eyebrow">Matchs</span>
+        <h1>Tous les <em class="lp-accent lp-accent--plain">matchs</em></h1>
+        <p>Retrouvez l'ensemble des rencontres programmées et leurs résultats.</p>
+    </section>
+
+    <form method="get" th:action="@{/matches}" class="mb-4" aria-label="Filtres des matchs">
+        <div th:replace="~{fragments/list-controls :: barre(false, '/matches')}" />
+        <div class="row g-2">
+            <div class="col-6 col-md-3">
+                <label class="form-label small text-secondary mb-1" for="filtre-phase">Phase</label>
+                <select class="form-select" id="filtre-phase" name="phase"
+                        style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                    <option value="">Toutes</option>
+                    <option th:each="p : ${phases}" th:value="${p}" th:text="${p}"
+                            th:selected="${p.name() == filtrePhase}">PHASE</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small text-secondary mb-1" for="filtre-tournoi">Tournoi</label>
+                <select class="form-select" id="filtre-tournoi" name="tournoi"
+                        style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                    <option value="">Tous</option>
+                    <option th:each="t : ${tournois.content}" th:value="${t.id}" th:text="${t.nom}"
+                            th:selected="${t.id == filtreTournoi}">Tournoi</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small text-secondary mb-1" for="filtre-date">Date</label>
+                <input type="date" class="form-control" id="filtre-date" name="date" th:value="${filtreDate}"
+                       style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line); padding: 0 1rem;" />
+            </div>
+        </div>
+    </form>
+
+    <div th:if="${matches == null or matches.content.isEmpty()}" class="empty-state text-center">
+        <i class="bi bi-calendar2-x"></i>
+        <h3>Aucun match disponible</h3>
+        <p>Il n'y a pas de match programmé pour le moment.</p>
+    </div>
+
+    <div class="match-grid" th:unless="${matches == null or matches.isEmpty()}">
+        <div class="match-card card" th:each="m : ${matches.content}">
+            <a class="match-tournament-badge"
+               th:href="@{/tournaments/{id}/matches(id=${m.tournamentId})}">
+                <i class="bi bi-trophy" aria-hidden="true"></i>
+                <span th:text="${m.tournamentNom}">Tournoi</span>
+            </a>
+            <div class="match-teams">
+                <div class="match-team match-team-a">
+                    <span th:text="${m.equipeDomicileNom}" class="fw-bold"></span>
+                </div>
+                <div class="match-score text-center">
+                    <span th:if="${m.scoreDomicile != null and m.scoreVisiteur != null}"
+                          class="match-score-number fw-bold" th:text="|${m.scoreDomicile} - ${m.scoreVisiteur}|">0 - 0</span>
+                    <span th:if="${m.scoreDomicile == null or m.scoreVisiteur == null}"
+                          class="match-score-pending fw-bold">– : –</span>
+                </div>
+                <div class="match-team match-team-b">
+                    <span th:text="${m.equipeVisiteurNom}" class="fw-bold"></span>
+                </div>
+            </div>
+            <div class="match-meta text-secondary small">
+                <span>Date : </span><span th:text="${m.date}">JJ/MM/AAAA</span>
+                <span class="mx-2">|</span>
+                <span>Phase : </span><span th:text="${m.phase}">Programmé</span>
+                <span class="match-badge match-badge-sm" th:classappend="${m.statut == 'TERMINE'} ? 'success' : (${m.statut == 'EN_COURS'} ? 'info' : (${m.statut == 'PROGRAMME'} ? 'warning' : 'secondary'))"
+                      th:text="${m.statut}">TERMINE</span>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/list-controls :: pagination(page=${matches}, base='/matches')}" />
+</div>
+</html>

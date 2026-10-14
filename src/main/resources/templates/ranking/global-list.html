@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}">
+<div th:fragment="content">
+    <section class="app-page-head reveal">
+        <span class="eyebrow">Classement</span>
+        <h1>Classements <em class="lp-accent lp-accent--plain">généraux</em></h1>
+        <p>Retrouvez les positions des équipes à travers les compétitions.</p>
+    </section>
+
+    <form method="get" th:action="@{/rankings}" class="mb-4" aria-label="Filtre des classements">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-4">
+                <label class="form-label small text-secondary mb-1" for="filtre-tournoi">Tournoi</label>
+                <select class="form-select" id="filtre-tournoi" name="tournoi"
+                        style="height: 44px; border-radius: 14px; background: var(--card-alt); border: 1px solid var(--line);">
+                    <option value="">Tous les tournois</option>
+                    <option th:each="t : ${tournois.content}" th:value="${t.id}" th:text="${t.nom}"
+                            th:selected="${t.id == filtreTournoi}">Tournoi</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">Appliquer</button>
+            </div>
+        </div>
+    </form>
+
+    <div th:if="${rankingsByTournament == null or rankingsByTournament.isEmpty()}" class="empty-state text-center mt-4">
+        <i class="bi bi-bar-chart-line"></i>
+        <h3>Aucun classement disponible</h3>
+        <p>Les classements seront affichés dès que des résultats seront enregistrés.</p>
+    </div>
+
+    <div class="ranking-groups" th:unless="${rankingsByTournament == null or rankingsByTournament.isEmpty()}">
+        <section class="ranking-group" th:each="entry : ${rankingsByTournament}">
+            <div class="ranking-group-head">
+                <i class="bi bi-trophy" aria-hidden="true"></i>
+                <h2>
+                    <a th:href="@{/tournaments/{id}/ranking(id=${entry.key})}"
+                       th:text="${entry.value[0].tournamentNom}">Tournoi</a>
+                </h2>
+                <span class="ranking-group-badge"
+                      th:text="|${#lists.size(entry.value)} équipes|">0 équipes</span>
+            </div>
+
+            <div class="data-card" style="border-radius: 20px; background: var(--card); border: 1px solid var(--line);">
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <caption class="visually-hidden" th:text="|Classement - ${entry.value[0].tournamentNom}|">Classement du tournoi</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 40px;">#</th>
+                                <th scope="col" style="width: 180px;">Équipe</th>
+                                <th scope="col" style="width: 30px;">J</th>
+                                <th scope="col" style="width: 30px;">G</th>
+                                <th scope="col" style="width: 30px;">N</th>
+                                <th scope="col" style="width: 30px;">P</th>
+                                <th scope="col" style="width: 50px;">Pts</th>
+                                <th scope="col" style="width: 40px;">BP</th>
+                                <th scope="col" style="width: 40px;">Diff</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="r : ${entry.value}">
+                                <td>
+                                    <span class="rank-badge"
+                                          th:classappend="${r.classement == 1} ? 'rank-gold' : (${r.classement == 2} ? 'rank-silver' : (${r.classement == 3} ? 'rank-bronze' : 'rank-default'))"
+                                          th:text="${r.classement}">1</span>
+                                </td>
+                                <td class="podium-name">
+                                    <span th:text="${r.teamNom}">Équipe</span>
+                                </td>
+                                <td th:text="${r.matchsJoues}">0</td>
+                                <td th:text="${r.victoires}">0</td>
+                                <td th:text="${r.nuls}">0</td>
+                                <td th:text="${r.defaites}">0</td>
+                                <td><strong th:text="${r.points}" class="fw-bold">0</strong></td>
+                                <td th:text="${r.butsMarques}">0</td>
+                                <td>
+                                    <span th:if="${r.diffButs > 0}" class="diff-positive fw-bold" th:text="'+' + ${r.diffButs}">+0</span>
+                                    <span th:if="${r.diffButs == 0}" th:text="${r.diffButs}">0</span>
+                                    <span th:if="${r.diffButs < 0}" class="diff-negative" th:text="${r.diffButs}">-0</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+</html>

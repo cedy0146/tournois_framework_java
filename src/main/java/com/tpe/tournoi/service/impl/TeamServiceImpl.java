@@ -5,22 +5,42 @@ import com.tpe.tournoi.dto.request.UpdateTeamRequest;
 import com.tpe.tournoi.dto.response.TeamResponse;
 import com.tpe.tournoi.entity.Team;
 import com.tpe.tournoi.entity.TeamStatus;
+import com.tpe.tournoi.entity.Tournament;
+import com.tpe.tournoi.entity.TournamentTeam;
 import com.tpe.tournoi.exception.*;
 import com.tpe.tournoi.mapper.TeamMapper;
 import com.tpe.tournoi.repository.TeamRepository;
+import com.tpe.tournoi.repository.TournamentMatchRepository;
+import com.tpe.tournoi.repository.TournamentTeamRepository;
 import com.tpe.tournoi.service.TeamService;
-import lombok.RequiredArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class TeamServiceImpl implements TeamService {
 
     private final TeamRepository teamRepo;
     private final TeamMapper mapper;
+    private final TournamentMatchRepository matchRepo;
+    private final TournamentTeamRepository tournamentTeamRepo;
+
+    public TeamServiceImpl(TeamRepository teamRepo, TeamMapper mapper,
+                       TournamentMatchRepository matchRepo,
+                       TournamentTeamRepository tournamentTeamRepo) {
+        this.teamRepo = teamRepo;
+        this.mapper = mapper;
+        this.matchRepo = matchRepo;
+        this.tournamentTeamRepo = tournamentTeamRepo;
+    }
 
     @Override
     @Transactional
@@ -89,6 +109,47 @@ public class TeamServiceImpl implements TeamService {
     public void delete(Long id) {
         findTeam(id);
         teamRepo.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TeamResponse> getAvailableForTournament(Long tournamentId) {
+        return teamRepo.findAvailableForTournament(tournamentId, TeamStatus.ACTIVE).stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getTeamHistory(Long id) {
+        Team team = findTeam(id);
+        List<Map<String, Object>> history = new ArrayList<>();
+
+        List<TournamentTeam> inscriptions = tournamentTeamRepo.findByTeamId(id);
+        for (TournamentTeam tt : inscriptions) {
+            Tournament tournament = tt.getTournament();
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("tournoiNom", tournament.getNom());
+            entry.put("tournoiType", tournament.getType().name());
+            entry.put("tournoiStatut", tournament.getStatut().name());
+
+            List<Map<String, Object>> matches = matchRepo.findByTournamentIdAndTeam(tournament.getId(), team.getId()).stream()
+                    .map(m -> {
+                        Map<String, Object> matchInfo = new HashMap<>();
+                        matchInfo.put("tour", m.getTour());
+                        matchInfo.put("date", m.getDate());
+                        matchInfo.put("heure", m.getHeure().toString());
+                        matchInfo.put("adversaire", m.getEquipeDomicile().getId().equals(team.getId()) ? m.getEquipeVisiteur().getNom() : m.getEquipeDomicile().getNom());
+                        matchInfo.put("scoreDomicile", m.getScoreDomicile());
+                        matchInfo.put("scoreVisiteur", m.getScoreVisiteur());
+                        matchInfo.put("vainqueur", m.getVainqueur() != null && m.getVainqueur().getId().equals(team.getId()) ? "équipe" : (m.getVainqueur() != null ? m.getVainqueur().getNom() : "null"));
+                        return matchInfo;
+                    })
+                    .collect(Collectors.toList());
+            entry.put("matches", matches);
+            history.add(entry);
+        }
+        return history;
     }
 
     private Team findTeam(Long id) {

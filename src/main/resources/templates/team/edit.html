@@ -1,40 +1,63 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: html}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}">
 <div th:fragment="content">
-    <h2 class="mb-4">Modifier l'Équipe</h2>
-
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <form th:action="@{/teams/{id}(id=${team.id})}" method="post" class="card p-4">
-
-                <div class="mb-3">
-                    <label class="form-label">Nom</label>
-                    <input type="text" class="form-control" name="nom" th:value="${team.nom}"/>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Logo (URL)</label>
-                    <input type="text" class="form-control" name="logo" th:value="${team.logo}"/>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Ville</label>
-                    <input type="text" class="form-control" name="ville" th:value="${team.ville}"/>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Entraîneur</label>
-                    <input type="text" class="form-control" name="entraineur" th:value="${team.entraineur}"/>
-                </div>
-
-                <div class="text-end">
-                    <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary">Annuler</a>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                </div>
-            </form>
+    <div class="page-title">
+        <h2>Modifier l'équipe</h2>
+        <div class="actions">
+            <a th:href="@{/teams/{id}(id=${teamId})}" class="btn btn-outline-secondary">Retour</a>
         </div>
+    </div>
+
+    <div class="form-panel mx-auto" style="max-width: 760px;">
+        <div th:replace="~{:: theForm}"></div>
+    </div>
+</div>
+
+<form th:fragment="theForm" id="teamEditForm" th:object="${team}" th:action="@{/teams/{id}(id=${teamId})}" method="post" data-modal-form data-success-message="Équipe mise à jour">
+    <div class="form-grid">
+        <div class="form-group full">
+            <label class="form-label" for="nom">Nom *</label>
+            <input type="text" class="form-control" id="nom" name="nom" th:value="${team.nom}" th:classappend="${#fields.hasErrors('nom')} ? 'is-invalid'" />
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}"></div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="ville">Ville</label>
+            <input type="text" class="form-control" id="ville" name="ville" th:value="${team.ville}" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="entraineur">Entraîneur</label>
+            <input type="text" class="form-control" id="entraineur" name="entraineur" th:value="${team.entraineur}" />
+        </div>
+
+        <div class="form-group full">
+            <label class="form-label" for="logo">Logo (URL)</label>
+            <input type="text" class="form-control" id="logo" name="logo" th:value="${team.logo}" />
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <a th:href="@{/teams/{id}(id=${teamId})}" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+</form>
+
+<div th:fragment="modalContent" class="modal-fragment">
+    <div class="modal-header">
+        <h2 class="modal-title fs-5" id="appModalTitle">Modifier l'équipe</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+    </div>
+    <div class="modal-body">
+        <div th:if="${error != null}" class="alert custom-alert danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            <span th:text="${error}"></span>
+        </div>
+        <div th:replace="~{:: theForm}"></div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" form="teamEditForm" class="btn btn-primary">Enregistrer</button>
     </div>
 </div>
 </html>

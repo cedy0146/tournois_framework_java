@@ -2,30 +2,46 @@ package com.tpe.tournoi.config;
 
 import com.tpe.tournoi.entity.*;
 import com.tpe.tournoi.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class DataInitializer implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final TournamentRepository tournamentRepo;
     private final TeamRepository teamRepo;
     private final PlayerRepository playerRepo;
     private final TournamentTeamRepository tournamentTeamRepo;
     private final TournamentMatchRepository matchRepo;
+    private final AppUserRepository appUserRepo;
+    private final PasswordEncoder passwordEncoder;
+
+    public DataInitializer(TournamentRepository tournamentRepo, TeamRepository teamRepo,
+                           PlayerRepository playerRepo, TournamentTeamRepository tournamentTeamRepo,
+                           TournamentMatchRepository matchRepo, AppUserRepository appUserRepo,
+                           PasswordEncoder passwordEncoder) {
+        this.tournamentRepo = tournamentRepo;
+        this.teamRepo = teamRepo;
+        this.playerRepo = playerRepo;
+        this.tournamentTeamRepo = tournamentTeamRepo;
+        this.matchRepo = matchRepo;
+        this.appUserRepo = appUserRepo;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     @Transactional
     public void run(String... args) {
+        initialiserUtilisateurs();
+
         if (tournamentRepo.count() > 0) {
             log.info("Données déjà présentes, pas de réinitialisation");
             return;
@@ -145,11 +161,29 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info("Données de démo créées avec succès !");
         log.info("3 tournois, 8 équipes, 32 joueurs créés");
-        log.info("--- Vérification bracket élimination directe (10 équipes) ---");
-        log.info("BracketSize=16, byes=6. Interleaving: [bye,T0,bye,T1,bye,T2,bye,T3,bye,T4,bye,T5,T6,T7,T8,T9]");
-        log.info("Tour 1 (HUITIEME): 8 slots, 2 matchs réels (T6vT7, T8vT9) + 6 byes fusionnés en 3 placeholders");
-        log.info("Tour 2 (QUART): 4 slots, 3 placeholders issue des byes (chaque paire de byes adjacents fusionnée) + 1 match réel");
-        log.info("Après fusion: chaque bracketPosition du tour 2 ne contient QU'UN SEUL match, jamais de doublon");
+    }
+
+    /** Crée (ou complète) les comptes utilisateurs. Idempotent. */
+    private void initialiserUtilisateurs() {
+        creerUtilisateur("admin", "admin123", "Administrateur", "ADMIN");
+        creerUtilisateur("manager", "manager123", "Gestionnaire de tournoi", "MANAGER");
+        creerUtilisateur("operator", "operator123", "Opérateur de saisie", "OPERATOR");
+        creerUtilisateur("user", "user123", "Utilisateur standard", "USER");
+        creerUtilisateur("demo", "demo123", "Compte de démonstration", "ADMIN,MANAGER,OPERATOR");
+    }
+
+    private void creerUtilisateur(String username, String motDePasse, String nomComplet, String roles) {
+        if (appUserRepo.existsByUsername(username)) {
+            return;
+        }
+        appUserRepo.save(AppUser.builder()
+                .username(username)
+                .password(passwordEncoder.encode(motDePasse))
+                .nomComplet(nomComplet)
+                .roles(roles)
+                .actif(true)
+                .build());
+        log.info("Compte créé : {} ({})", username, roles);
     }
 
     private Team createTeam(String nom, String ville, String entraineur) {

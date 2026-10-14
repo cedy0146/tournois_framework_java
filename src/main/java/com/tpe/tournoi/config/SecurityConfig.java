@@ -1,19 +1,19 @@
-package com.tpe.tournoi.security;
+package com.tpe.tournoi.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -22,43 +22,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-
-        manager.createUser(User.withUsername("admin")
-                .password(encoder.encode("admin123"))
-                .roles("ADMIN")
-                .build());
-
-        manager.createUser(User.withUsername("manager")
-                .password(encoder.encode("manager123"))
-                .roles("MANAGER")
-                .build());
-
-        manager.createUser(User.withUsername("operator")
-                .password(encoder.encode("operator123"))
-                .roles("OPERATOR")
-                .build());
-
-        manager.createUser(User.withUsername("user")
-                .password(encoder.encode("user123"))
-                .roles("USER")
-                .build());
-
-        manager.createUser(User.withUsername("demo")
-                .password(encoder.encode("demo123"))
-                .roles("ADMIN", "MANAGER", "OPERATOR")
-                .build());
-
-        return manager;
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 // Pages publiques
-                .requestMatchers("/", "/login", "/css/**", "/js/**", "/h2-console/**").permitAll()
+                .requestMatchers("/", "/login", "/css/**", "/js/**", "/img/**", "/h2-console/**").permitAll()
+
+                // --- Application web : accès aux formulaires ---
+                .requestMatchers(HttpMethod.GET, "/tournaments/new", "/tournaments/*/edit",
+                        "/teams/new", "/teams/*/edit", "/teams/*/players/*/edit")
+                    .hasAnyRole("ADMIN", "MANAGER")
+                // --- Application web : saisie d'un résultat ---
+                .requestMatchers(HttpMethod.POST, "/tournaments/*/matches/*/result")
+                    .hasAnyRole("OPERATOR", "MANAGER", "ADMIN")
+                // --- Application web : gestion des tournois ---
+                .requestMatchers(HttpMethod.POST, "/tournaments/**").hasAnyRole("ADMIN", "MANAGER")
+                // --- Application web : gestion des équipes et des joueurs ---
+                .requestMatchers(HttpMethod.POST, "/teams/**").hasAnyRole("ADMIN", "MANAGER")
+
                 // API REST : lecture = tous authentifiés
                 .requestMatchers(HttpMethod.GET, "/api/tournaments/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/teams/**").authenticated()
@@ -74,21 +55,22 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/teams").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.PUT, "/api/teams/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.DELETE, "/api/teams/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.POST, "/api/*/players").hasAnyRole("ADMIN", "MANAGER")
-                // Saisie de résultats = OPERATOR, MANAGER, ADMIN
+                .requestMatchers(HttpMethod.POST, "/api/teams/*/players").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PUT, "/api/teams/*/players/*").hasAnyRole("ADMIN", "MANAGER")
+                // Saisie de résultats / planning = OPERATOR, MANAGER, ADMIN
                 .requestMatchers(HttpMethod.PUT, "/api/matches/**").hasAnyRole("OPERATOR", "MANAGER", "ADMIN")
                 // Toute autre requête
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/", true)
-                .failureUrl("/login?error=true")
+                .defaultSuccessUrl("/dashboard", true)
+                .failureUrl("/?error=true")
                 .permitAll()
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout=true")
+                .logoutSuccessUrl("/?logout=true")
                 .permitAll()
             )
             .csrf(AbstractHttpConfigurer::disable)

@@ -5,6 +5,8 @@ import java.util.List;
 
 public interface RankingService {
 
+    List<RankingResponse> getAllRankings();
+
     List<RankingResponse> getRanking(Long tournamentId);
 
     void recalculateRankings(Long tournamentId);

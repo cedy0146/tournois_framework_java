@@ -2,18 +2,21 @@ package com.tpe.tournoi.controller.web;
 
 import com.tpe.tournoi.service.RankingService;
 import com.tpe.tournoi.service.TournamentService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/tournaments/{tournamentId}/ranking")
-@RequiredArgsConstructor
 public class RankingWebController {
 
     private final RankingService rankingService;
     private final TournamentService tournamentService;
+
+    public RankingWebController(RankingService rankingService, TournamentService tournamentService) {
+        this.rankingService = rankingService;
+        this.tournamentService = tournamentService;
+    }
 
     @GetMapping
     public String ranking(@PathVariable Long tournamentId, Model model) {

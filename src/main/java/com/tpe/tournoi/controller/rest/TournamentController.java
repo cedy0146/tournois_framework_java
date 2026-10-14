@@ -5,11 +5,11 @@ import com.tpe.tournoi.dto.response.*;
 import com.tpe.tournoi.entity.MatchPhase;
 import com.tpe.tournoi.service.*;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -18,15 +18,22 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class TournamentController {
 
     private final TournamentService tournamentService;
     private final MatchService matchService;
     private final RankingService rankingService;
 
+    public TournamentController(TournamentService tournamentService, MatchService matchService,
+                                RankingService rankingService) {
+        this.tournamentService = tournamentService;
+        this.matchService = matchService;
+        this.rankingService = rankingService;
+    }
+
     // --- Tournament CRUD ---
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PostMapping("/tournaments")
     public ResponseEntity<TournamentResponse> create(@Valid @RequestBody CreateTournamentRequest request) {
         TournamentResponse response = tournamentService.create(request);
@@ -58,12 +65,14 @@ public class TournamentController {
         return ResponseEntity.ok(tournamentService.getById(id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PutMapping("/tournaments/{id}")
     public ResponseEntity<TournamentResponse> update(@PathVariable Long id,
-                                                      @Valid @RequestBody UpdateTournamentRequest request) {
+                                                       @Valid @RequestBody UpdateTournamentRequest request) {
         return ResponseEntity.ok(tournamentService.update(id, request));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @DeleteMapping("/tournaments/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         tournamentService.delete(id);
@@ -72,22 +81,25 @@ public class TournamentController {
 
     // --- Team registration ---
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PostMapping("/tournaments/{id}/teams")
     public ResponseEntity<Void> registerTeam(@PathVariable("id") Long tournamentId,
-                                              @RequestParam Long teamId) {
+                                               @RequestParam Long teamId) {
         tournamentService.registerTeam(tournamentId, teamId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @DeleteMapping("/tournaments/{id}/teams/{teamId}")
     public ResponseEntity<Void> removeTeam(@PathVariable("id") Long tournamentId,
-                                            @PathVariable Long teamId) {
+                                             @PathVariable Long teamId) {
         tournamentService.removeTeam(tournamentId, teamId);
         return ResponseEntity.noContent().build();
     }
 
     // --- Match generation ---
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PostMapping("/tournaments/{id}/generate-matches")
     public ResponseEntity<Void> generateMatches(@PathVariable Long id) {
         tournamentService.generateMatches(id);
